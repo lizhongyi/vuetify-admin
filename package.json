@@ -14,9 +14,19 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "vuetify": "^1.0.0-beta.5-TP.1.2",
+    "@transplace/vuetify": "^1.0.0-beta.5-TP.1.2",
+    "Validator": "^1.0.5",
+    "adonis-websocket-client": "^1.0.2",
+    "i": "^0.3.6",
+    "pug": "^2.0.0-rc.4",
     "vue": "^2.5.2",
-    "vue-router": "^3.0.1"
+    "vue-i18n": "^7.4.2",
+    "vue-quill-editor": "^3.0.5",
+    "vue-router": "^3.0.1",
+    "vue-timeago": "^3.4.2",
+    "vue2-dropzone": "^3.0.3",
+    "vuetify": "^1.0.0-beta.5-TP.1.2",
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",
