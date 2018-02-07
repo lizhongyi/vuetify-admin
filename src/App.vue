@@ -43,7 +43,8 @@
           v-icon face
         v-list
           v-list-tile(@click='')
-            v-list-tile-title item.title
+            v-list-tile-title 
+           
     v-content(style='margin:1rem')
       router-view
     v-footer(:inset='fixed', app='')
@@ -77,10 +78,11 @@ export default {
     },
     fetchMenu () {
       // fetch menu from server
-      // this.$http.get('menu').then(({data}) => this.$store.commit('setMenu', data))
+      this.$http.get('menu').then(({data}) => this.$store.commit('setMenu', data))
     }
   },
   created () {
+    console.log(this.pageTitle)
     this.fetchMenu()
   }
 }

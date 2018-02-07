@@ -14,6 +14,7 @@ function route (path, file, name, children) {
 Vue.use(Router)
 
 const router = new Router({
+  base: __dirname,
   mode: 'hash',
   scrollBehavior: () => ({ y: 0 }),
   routes: [
@@ -22,8 +23,8 @@ const router = new Router({
 
     // path, file(*.vue), name, children
 
-    route('/', 'HelloWorld', 'home'),
-    route('/crud/:resource', 'CrudGrid', 'grid'),
+    route('/', 'Home', 'home'),
+    route('/crud/:resource', 'List', 'List'),
     route('/crud/:resource/:id/edit', 'CrudForm', 'edit'),
     route('/crud/:resource/create', 'CrudForm', 'create'),
     route('/crud/:resource/:id/:action', 'CrudForm', 'action'),

@@ -1,7 +1,20 @@
 <template>
   <div>
-    <v-dialog v-model="dialog" persistent max-width="500px">
-      <v-btn color="primary" @click="add()" slot="activator" class="mb-2">New Item</v-btn>
+  
+    <v-layout>
+      <v-flex md2>
+    
+
+      </v-flex>
+     <v-flex md9>
+     <v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields"  :fields='filters.fields' @submit='doSearch'  submitButtonText='Search'  submitButtonIcon='search'></v-form>
+     </v-flex>
+      <v-flex md1>
+        <v-btn fab dark color="green" :to="{name: 'create', params: {resource}}" v-if="options.create">
+       <v-icon dark>add</v-icon>
+     </v-btn>
+       <v-dialog v-model="dialog" persistent max-width="500px">
+      <v-btn color="primary" @click="add()" slot="activator" class="mb-2" v-if="!options.create">add</v-btn>  
       <v-card>
         <v-card-title>
           <span class="headline">{{ this.item.edit ? 'EDIT' : 'ADD' }}</span>
@@ -22,11 +35,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-layout>
-     <v-flex md4></v-flex>
-     <v-flex md8>
-     <v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields"  :fields='filters.fields' @submit='doSearch'  submitButtonText='Search'  submitButtonIcon='search'></v-form>
-     </v-flex>
+    </v-flex>
     </v-layout>
     <v-data-table
       :headers="columns"
@@ -45,14 +54,18 @@
         </td> -->
          <td v-if='actions !== false' width='160'>
          <template v-for=" (value, action) in actions">
-           <v-btn v-if="['edit', 'delete'].indexOf(action) < 0" :key="action" class="router primary fab small" :to="{name: action, params: {resource,id:props.item.id}}">
+           <v-btn v-if="action != 'delete'" icon  :key="action+1"  :to="{name: action, params: {resource,id:props.item.id}}">
              <v-icon> {{action.icon ? action.icon : action}} </v-icon>
            </v-btn>  
+           
+          <v-btn v-if="action == 'delete'" icon class="mx-0" :key="action" @click="deleteItem(props.index)">
+            <v-icon color="pink">delete</v-icon>
+          </v-btn>
 
-           <v-btn v-if="options.edit !== false" :key="action" dark primary fab small :to="{name: 'edit', params: {resource,id:props.item.id}}" >
-              <v-icon>edit</v-icon>
-           </v-btn>
-              
+          <!-- <v-btn v-if="action == 'edit'" icon class="mx-0" :key="action" :to="{name: action, params: {resource,id:props.item.id}}">
+            <v-icon color="green">edit</v-icon>
+          </v-btn> -->
+
         </template>  
          </td>     
       </template>
@@ -104,6 +117,12 @@
       formTitle () {
         console.log(this.item.edit)
         return this.item.edit ? 'Edit Item' : 'New Item'
+      },
+      resource () {
+        return this.$route.params.resource
+      },
+      totalPages () {
+        return Math.ceil(this.pagination.totalItems / this.pagination.rowsPerPage)
       }
     },
     created () {
@@ -132,20 +151,20 @@
       },
       fetchData () {
         this.preFetch()
-        this.$http.get(`users`, {params: this.$route.query}).then(({ data }) => {
+        this.$http.get(`${this.resource}`, {params: this.$route.query}).then(({ data }) => {
           this.items = data.data
           this.fetchForm(this.items[0])
           this.pagination.totalItems = data.total
         })
       },
       fetchForm (item) {
-        this.$http.get(`users/form`).then(({data}) => {
+        this.$http.get(`${this.resource}/form`).then(({data}) => {
           this.form = data
         })
       },
       fetch () {
         if (this.columns.length <= 0) {
-          // fetch grid params from server: e.g. /crud/users/grid
+          // fetch grid params from server: e.g. /crud/${resource}/grid
           this.fetchGrid()
         } else {
           // or define grid params manually
@@ -179,7 +198,7 @@
       },
       fetchGrid () {
         return new Promise((resolve, reject) => {
-          this.$http.get(`users/grid`).then(({ data }) => {
+          this.$http.get(`${this.resource}/grid`).then(({ data }) => {
             for (let k in data.columns) {
               data.columns[k].text = this.$t(data.columns[k].text)
             }
