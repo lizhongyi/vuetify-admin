@@ -1,6 +1,6 @@
-# spa-oa
+# an admin-client
 
-> a oa
+> an my-oa
 
 ## Build Setup
 
