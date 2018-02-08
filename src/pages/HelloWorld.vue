@@ -32,6 +32,9 @@
       :headers="columns"
       :items="items"
       class="elevation-1"
+      :total-items="pagination.totalItems"
+      :pagination.sync="pagination" 
+      :loading="loading"
     >
       <template slot="items" slot-scope="props">
         <td :class="column.left? '': 'text-xs-left'" v-for="(column, index) in columns" :key="column.text" v-if="index < columns.length - 1 " v-html="getColumnData(props.item, column)"> </td>
@@ -52,14 +55,22 @@
            <v-btn v-if="options.edit !== false" :key="action" dark primary fab small :to="{name: 'edit', params: {resource,id:props.item.id}}" >
               <v-icon>edit</v-icon>
            </v-btn>
-              
+
         </template>  
          </td>     
       </template>
       <template slot="no-data">
-        <v-btn color="primary" @click="initialize">Reset</v-btn>
+      <v-alert :value="true" color="error" icon="warning">
+        Sorry, nothing to display here :(
+      </v-alert>
       </template>
     </v-data-table>
+    <v-flex>
+       <v-card>
+         <v-pagination v-model='pagination.page' :length='totalPages'  circle></v-pagination>
+       </v-card>
+    </v-flex>
+    
   </div>
 </template>
 <script>
@@ -213,6 +224,7 @@
         this.$route.query.sort = sort
         this.$route.query.perPage = this.pagination.rowsPerPage
         this.$route.query.page = this.pagination.page
+        alert(10)
       },
       updateRoute () {
         this.$route.query.keepLayout = true
