@@ -7,7 +7,7 @@
 
       </v-flex>
      <v-flex md9>
-     <v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields"  :fields='filters.fields' @submit='doSearch'  submitButtonText='Search'  submitButtonIcon='search'></v-form>
+     <my-v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields"  :fields='filters.fields' @submit='doSearch'  submitButtonText='Search'  submitButtonIcon='search'></my-v-form>
      </v-flex>
       <v-flex md1>
         <v-btn fab dark color="green" :to="{name: 'create', params: {resource}}" v-if="options.create">
@@ -84,9 +84,9 @@
          </td>     
       </template>
       <template slot="no-data">
-        <v-alert :value="true" color="error" icon="warning">
+        
         Sorry, nothing to display here :(
-        </v-alert>
+      
       </template>
     </v-data-table>
   </div>

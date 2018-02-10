@@ -45,7 +45,7 @@ Vue.component('dropzone', Dropzone)
 // import Modal from './components/Modal'
 // Vue.use(Modal)
 
-Vue.component('v-form', VForm)
+Vue.component('my-v-form', VForm)
 Vue.component('v-grid', VGrid)
 Vue.component('v-field', VField)
 

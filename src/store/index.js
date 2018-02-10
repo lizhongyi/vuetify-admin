@@ -14,6 +14,15 @@ const store = new Vuex.Store({
       type: null,
       body: null
     },
+    snackbar: {
+      timeout: 5000,
+      color: null,
+      body: 'message',
+      mode: null,
+      x: '',
+      y: 'top',
+      show: false
+    },
     config: config
 
   },
