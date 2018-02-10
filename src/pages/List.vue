@@ -84,7 +84,7 @@
          </td>     
       </template>
       <template slot="no-data">
-        
+       
         Sorry, nothing to display here :(
       
       </template>
@@ -173,7 +173,7 @@ export default {
     fetchData () {
       this.preFetch()
       this.loading = true
-      this.$http.get(`${this.resource}`, {params: this.$route.query}).then(({ data }) => {
+      this.$http.get(`${this.resource}`, {params: this.$route.query}).then((data) => {
         this.items = data.data
         this.fetchForm(this.items[0])
         this.pagination.totalItems = data.total
@@ -181,7 +181,7 @@ export default {
       })
     },
     fetchForm (item) {
-      this.$http.get(`${this.resource}/form`).then(({data}) => {
+      this.$http.get(`${this.resource}/form`).then((data) => {
         this.form = data
       })
     },
@@ -221,7 +221,7 @@ export default {
     },
     fetchGrid () {
       return new Promise((resolve, reject) => {
-        this.$http.get(`${this.resource}/grid`).then(({ data }) => {
+        this.$http.get(`${this.resource}/grid`).then((data) => {
           for (let k in data.columns) {
             data.columns[k].text = this.$t(data.columns[k].text)
           }

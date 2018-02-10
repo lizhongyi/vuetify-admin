@@ -90,9 +90,8 @@ export default {
     submit () {
       if (this.model.username && this.model.password) {
         this.$http.post('/login', this.model).then((data) => {
-          console.log(data)
-          if (data.code === 200) {
-            this.onSuccess(data.data)
+          if (data.code === 0) {
+            this.onSuccess(data)
           }
         })
       }

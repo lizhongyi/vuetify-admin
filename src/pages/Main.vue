@@ -78,7 +78,7 @@ export default {
     },
     fetchMenu () {
       // fetch menu from server
-      this.$http.get('menu').then(({data}) => this.$store.commit('setMenu', data))
+     // this.$http.get('menu').then(({data}) => this.$store.commit('setMenu', data.data))
     }
   },
   created () {

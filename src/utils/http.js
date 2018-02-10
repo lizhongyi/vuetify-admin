@@ -22,19 +22,16 @@ http.interceptors.response.use(
     const {
       code
     } = response.data
-    if (code !== 200) {
+    if (code !== 0) {
       http.open({
         body: response.data.message,
         color: 'error',
         timeout: 7000
       })
-      // 50008:非法的token; 50012:其他客户端登录了;  50014:Token 过期了;
-      if (code === 403) {
-
-      }
+      console.log(response.data)
       return response.data
     } else {
-      return response.data
+      return response.data.result
     }
   },
   error => {
@@ -45,12 +42,18 @@ http.open = function (options = {}) {
   store.state.snackbar.show = true
   Object.assign(store.state.snackbar, options)
 }
-http.getAll = (apiUrl, params) => {
-  return http.get(apiUrl, params).then(({data}) => {
-    if (data.statusCode === 200) {
-      return data
+http.ajax = (Promise) => {
+  return Promise.then((data) => {
+    console.log(data)
+    if (data.code === 0) {
+      return data.result
     } else {
-      console.log(data)
+      http.open({
+        body: data.message,
+        color: 'error',
+        timeout: 7000
+      })
+      return data
     }
   })
 }
