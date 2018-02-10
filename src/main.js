@@ -8,6 +8,7 @@ import store from './store'
 import '../node_modules/@transplace/vuetify/src/stylus/main.styl'
 import helper from './utils/helper'
 import './utils/http'
+import './utils/otherMethod'
 import i18n from './i18n'
 import Dropzone from 'vue2-dropzone'
 import VueQuillEditor from 'vue-quill-editor'
@@ -44,7 +45,7 @@ Vue.component('dropzone', Dropzone)
 // import Modal from './components/Modal'
 // Vue.use(Modal)
 
-Vue.component('v-form', VForm)
+Vue.component('my-v-form', VForm)
 Vue.component('v-grid', VGrid)
 Vue.component('v-field', VField)
 

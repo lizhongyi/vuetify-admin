@@ -32,22 +32,45 @@
       :headers="columns"
       :items="items"
       class="elevation-1"
+      :total-items="pagination.totalItems"
+      :pagination.sync="pagination" 
+      :loading="loading"
     >
       <template slot="items" slot-scope="props">
         <td :class="column.left? '': 'text-xs-left'" v-for="(column, index) in columns" :key="column.text" v-if="index < columns.length - 1 " v-html="getColumnData(props.item, column)"> </td>
-        <td>
+        <!-- <td>
           <v-btn v-if="actions.edit" icon class="mx-0" @click.native.stop="showEdit(props.item)">
             <v-icon color="teal">edit</v-icon>
           </v-btn>
           <v-btn v-if="actions.delete" icon class="mx-0" @click="deleteItem(props.index)">
             <v-icon color="pink">delete</v-icon>
           </v-btn>
-        </td>
+        </td> -->
+         <td v-if='actions !== false' width='160'>
+         <template v-for=" (value, action) in actions">
+           <v-btn v-if="['edit', 'delete'].indexOf(action) < 0" :key="action" class="router primary fab small" :to="{name: action, params: {resource,id:props.item.id}}">
+             <v-icon> {{action.icon ? action.icon : action}} </v-icon>
+           </v-btn>  
+
+           <v-btn v-if="options.edit !== false" :key="action" dark primary fab small :to="{name: 'edit', params: {resource,id:props.item.id}}" >
+              <v-icon>edit</v-icon>
+           </v-btn>
+
+        </template>  
+         </td>     
       </template>
       <template slot="no-data">
-        <v-btn color="primary" @click="initialize">Reset</v-btn>
+      <v-alert :value="true" color="error" icon="warning">
+        Sorry, nothing to display here :(
+      </v-alert>
       </template>
     </v-data-table>
+    <v-flex>
+       <v-card>
+         <v-pagination v-model='pagination.page' :length='totalPages'  circle></v-pagination>
+       </v-card>
+    </v-flex>
+    
   </div>
 </template>
 <script>
@@ -97,7 +120,22 @@
     created () {
       this.initialize()
     },
-
+    watch: {
+      '$i18n.locale' (val) {
+        this.fetchGrid()
+      },
+      'pagination.page' (val) {
+        this.fetchData()
+      },
+      'pagination.sortBy' (val) {
+        this.fetchData()
+      },
+      'pagination.descending' (val) {
+        this.fetchData()
+      },
+      '$route.params': 'refresh'
+      // '$route.query': 'updateRoute'
+    },
     methods: {
       initialize () {
         this.fetchGrid().then(() => {})
@@ -186,6 +224,7 @@
         this.$route.query.sort = sort
         this.$route.query.perPage = this.pagination.rowsPerPage
         this.$route.query.page = this.pagination.page
+        alert(10)
       },
       updateRoute () {
         this.$route.query.keepLayout = true
