@@ -45,6 +45,21 @@ Vue.component('dropzone', Dropzone)
 // import Modal from './components/Modal'
 // Vue.use(Modal)
 
+router.beforeEach((to, from, next) => {
+  if (!window.localStorage.getItem('token')) {
+    if (to.path !== '/login') {
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
+    } else {
+      next()
+    }
+  } else {
+    next()
+  }
+})
+
 Vue.component('my-v-form', VForm)
 Vue.component('v-grid', VGrid)
 Vue.component('v-field', VField)

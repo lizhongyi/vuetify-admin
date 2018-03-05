@@ -53,14 +53,14 @@
 </template>
 
 <script>
-
+import axios from 'axios'
 export default {
 
   data () {
     return {
       model: {
         username: 'admin',
-        password: '123456'
+        password: 'admin'
       },
       errors: {},
       fields: {
@@ -85,14 +85,15 @@ export default {
   methods: {
     onSuccess (data) {
       this.$store.commit('setAuth', data)
-      this.$router.replace('/')
+      this.$http.defaults.headers.common['Authorization'] = this.$http.getToken()
+      var $location = this.$route.query.redirect ? this.$route.query.redirect : '/'
+      this.$router.push($location)
     },
     submit () {
       if (this.model.username && this.model.password) {
-        this.$http.post('/login', this.model).then((data) => {
-          if (data.code === 0) {
-            this.onSuccess(data)
-          }
+        axios.post('/api/login', this.model).then((data) => {
+          this.onSuccess(data.data)
+          console.log(data.data)
         })
       }
     }

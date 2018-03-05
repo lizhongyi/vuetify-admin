@@ -92,7 +92,7 @@
   </div>
 </template>
 <script>
-import otherMethod from '@/utils/otherMethod'
+import actions from '@/actions'
 const getDefaultData = () => {
   return {
     form: {
@@ -146,7 +146,8 @@ export default {
     }
   },
   created () {
-    this.actionBtn = otherMethod(this)[this.resource]
+    this.actionBtn = actions[this.resource]
+    console.log(actions)
     this.initialize()
   },
   watch: {
@@ -304,7 +305,7 @@ export default {
     showEdit (item) {
       this.item = item
       this.item.edit = true
-      this.fetchForm(item)
+      // this.fetchForm(item)
       console.log(item)
       this.dialog = true
     },

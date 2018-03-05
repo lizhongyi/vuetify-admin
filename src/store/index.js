@@ -29,10 +29,16 @@ const store = new Vuex.Store({
   mutations: {
 
     setAuth (state, { user, token }) {
-      state.user = user
-      state.token = token
-      global.helper.ls.set('user', user)
-      global.helper.ls.set('token', token)
+      if (user && token) {
+        state.user = user
+        state.token = token
+        global.helper.ls.set('user', user)
+        global.helper.ls.set('token', token)
+      } else {
+        state.user = null
+        state.token = null
+        window.localStorage.clear()
+      }
     },
     setMenu (state, data) {
       state.menu = data

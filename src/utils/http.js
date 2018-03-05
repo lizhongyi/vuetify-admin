@@ -2,12 +2,24 @@ import Vue from 'vue'
 import axios from 'axios'
 import config from '../config'
 import store from '../store'
-
+import router from '../router'
+// import router from 'vue-router'
 var http = axios.create({
   baseURL: config.api,
   timeout: 1000
-  // headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
 })
+
+http.getToken = function () {
+  var tokenJson = window.localStorage.getItem('token')
+  tokenJson = JSON.parse(tokenJson)
+  if (tokenJson) {
+    return tokenJson['type'] + ' ' + tokenJson['token']
+  } else {
+    return false
+  }
+}
+
+http.defaults.headers.common['Authorization'] = http.getToken()
 http.interceptors.request.use(function (request) {
   return request
 }, function (error) {
@@ -28,20 +40,30 @@ http.interceptors.response.use(
         color: 'error',
         timeout: 7000
       })
-      console.log(response.data)
+      console.log(response.status)
       return response.data
     } else {
+      console.log(response.status)
       return response.data.result
     }
   },
   error => {
-    return Promise.reject(error)
+    if (error.response.status !== 401) {
+      http.open({
+        body: error.message,
+        color: 'error',
+        timeout: 8000
+      })
+    } else {
+      router.push('/login')
+    }
   }
 )
 http.open = function (options = {}) {
   store.state.snackbar.show = true
   Object.assign(store.state.snackbar, options)
 }
+
 http.ajax = (Promise) => {
   return Promise.then((data) => {
     console.log(data)

@@ -43,7 +43,9 @@
           v-icon face
         v-list
           v-list-tile(@click='')
-            v-list-tile-title 
+            v-list-tile-title {{ user ? user.nickname : '已注销' }}
+          v-list-tile(@click='logout')
+            v-list-tile-title logout
            
     v-content(style='margin:1rem')
       router-view
@@ -53,7 +55,7 @@
 
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 export default {
   data () {
     return {
@@ -64,17 +66,23 @@ export default {
       miniVariant: false,
       right: true,
       rightDrawer: false,
-      title: 'Vuetify.js'
+      title: 'Vuetify.js',
+      nickname: null
     }
   },
   name: 'App',
   computed: {
-    ...mapState(['message', 'menu', 'pageTitle'])
+    ...mapState(['message', 'menu', 'pageTitle', 'user'])
   },
   methods: {
+    ...mapActions(['checkAuth']),
     changeLocale (to) {
       global.helper.ls.set('locale', to)
       this.$i18n.locale = to
+    },
+    logout () {
+      this.$store.commit('setAuth', {})
+      this.$router.push('/login')
     },
     fetchMenu () {
       // fetch menu from server
@@ -84,6 +92,7 @@ export default {
   created () {
     console.log(this.pageTitle)
     this.fetchMenu()
+    this.checkAuth()
   }
 }
 </script>

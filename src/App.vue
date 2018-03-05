@@ -33,10 +33,10 @@ export default {
 
   },
   computed: {
-    ...mapState(['snackbar', 'menu', 'pageTitle'])
+    ...mapState(['snackbar', 'menu', 'pageTitle', 'user'])
   },
   created () {
-    // this.$http.get('/users').then(({data}) => console.log(data))
+    console.log(this.user)
   }
 }
 </script>
