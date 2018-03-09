@@ -41,3 +41,8 @@ export default {
 }
 </script>
 
+<style>
+.dialog {
+  transition: 0.1s ease-in-out!important;
+}
+</style>

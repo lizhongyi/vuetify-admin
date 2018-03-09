@@ -10,11 +10,12 @@
      <my-v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields"  :fields='filters.fields' @submit='doSearch'  submitButtonText='Search'  submitButtonIcon='search'></my-v-form>
      </v-flex>
       <v-flex md1>
-        <v-btn fab dark color="green" :to="{name: 'create', params: {resource}}" v-if="options.create">
-       <v-icon dark>add</v-icon>
-     </v-btn>
-       <v-dialog v-model="dialog" persistent max-width="500px">
-      <v-btn color="primary" @click="add()" slot="activator" class="mb-2" v-if="!options.create">add</v-btn>  
+
+       <v-dialog v-model="dialog" persistent dialog-transition max-width="500px">
+     
+       <v-btn fab dark color="indigo" @click="add()" slot="activator" class="mb-2" v-if="!options.create">
+      <v-icon dark>add</v-icon>
+    </v-btn>
       <v-card>
         <v-card-title>
           <span class="headline">{{ this.item.edit ? 'EDIT' : 'ADD' }}</span>
@@ -146,8 +147,6 @@ export default {
     }
   },
   created () {
-    this.actionBtn = actions[this.resource]
-    console.log(actions)
     this.initialize()
   },
   watch: {
@@ -179,6 +178,7 @@ export default {
         this.fetchForm(this.items[0])
         this.pagination.totalItems = data.total
         this.loading = false
+        this.actionBtn = actions[this.resource]
       })
     },
     fetchForm (item) {
@@ -280,7 +280,23 @@ export default {
     },
     deleteItem (index) {
       // alert user for delete
-      this.items.splice(index, 1)
+      this.$http.delete(`${this.resource}/${this.items[index].id}`).then((data) => {
+        console.log(data)
+        if (data.result) {
+          this.$http.open({
+            body: data.messages,
+            color: 'success',
+            timeout: 2000
+          })
+          this.items.splice(index, 1)
+        } else {
+          this.$http.open({
+            body: data.messages,
+            color: 'error',
+            timeout: 8000
+          })
+        }
+      })
     },
 
     close () {
@@ -292,6 +308,14 @@ export default {
         // edit item
         this.item.edit = false
       } else {
+        this.$http.post(`${this.resource}`, this.item)
+          .then((data) => {
+            this.$http.open({
+              body: data.messages,
+              color: 'success',
+              timeout: 2000
+            })
+          })
         this.items.push(this.item)
       }
       this.dialog = false

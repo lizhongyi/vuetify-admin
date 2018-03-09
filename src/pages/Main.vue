@@ -30,17 +30,18 @@
         v-icon(v-if='!dark') brightness_5
       v-spacer
       v-menu(offset-y='', left='')
-        v-btn(slot='activator', depressed='')
-          v-icon face
-        v-list
-          v-list-tile(@click='')
-            v-list-tile-title 语言
+        //- v-btn(slot='activator', depressed='')
+        //-   v-icon face
+        //- v-list
+        //-   v-list-tile(@click='')
+        //-     v-list-tile-title 语言
       v-btn(icon='')
         v-icon notifications
       
       v-menu(offset-y='', left='')
         v-btn(slot='activator', depressed='')
-          v-icon face
+         
+          div  {{ user ? user.nickname : '已注销' }}
         v-list
           v-list-tile(@click='')
             v-list-tile-title {{ user ? user.nickname : '已注销' }}

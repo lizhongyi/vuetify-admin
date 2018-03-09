@@ -2,11 +2,11 @@ import Vue from 'vue'
 import axios from 'axios'
 import config from '../config'
 import store from '../store'
-import router from '../router'
+// import routåer from '../router'
 // import router from 'vue-router'
 var http = axios.create({
   baseURL: config.api,
-  timeout: 1000
+  timeout: 6000
 })
 
 http.getToken = function () {
@@ -34,7 +34,7 @@ http.interceptors.response.use(
     const {
       code
     } = response.data
-    if (code !== 0) {
+    if (code !== 0 && response.status !== 204) {
       http.open({
         body: response.data.message,
         color: 'error',
@@ -42,21 +42,35 @@ http.interceptors.response.use(
       })
       console.log(response.status)
       return response.data
+    } else if (response.status === 200) {
+      if (response.data.result === true) {
+        return response.data
+      } else {
+        return response.data.result
+      }
+    } else if (response.status === 204) {
+      http.open({
+        body: '操作异常，请检查操作',
+        color: 'error',
+        timeout: 7000
+      })
     } else {
-      console.log(response.status)
-      return response.data.result
+      http.open({
+        body: response.data.message,
+        color: 'error',
+        timeout: 7000
+      })
+      return response.data
     }
   },
   error => {
-    if (error.response.status !== 401) {
-      http.open({
-        body: error.message,
-        color: 'error',
-        timeout: 8000
-      })
-    } else {
-      router.push('/login')
-    }
+    console.log(error)
+
+    http.open({
+      body: error.message,
+      color: 'error',
+      timeout: 8000
+    })
   }
 )
 http.open = function (options = {}) {
