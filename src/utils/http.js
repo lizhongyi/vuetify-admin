@@ -34,26 +34,12 @@ http.interceptors.response.use(
     const {
       code
     } = response.data
-    if (code !== 0 && response.status !== 204) {
-      http.open({
-        body: response.data.message,
-        color: 'error',
-        timeout: 7000
-      })
-      console.log(response.status)
-      return response.data
-    } else if (response.status === 200) {
-      if (response.data.result === true) {
-        return response.data
-      } else {
+    if (code === 0) {
+      if (response.data.result !== true) {
         return response.data.result
+      } else {
+        return response.data
       }
-    } else if (response.status === 204) {
-      http.open({
-        body: '操作异常，请检查操作',
-        color: 'error',
-        timeout: 7000
-      })
     } else {
       http.open({
         body: response.data.message,
@@ -78,14 +64,15 @@ http.open = function (options = {}) {
   Object.assign(store.state.snackbar, options)
 }
 
-http.ajax = (Promise) => {
-  return Promise.then((data) => {
+http.ajax = (Promise, success) => {
+  Promise.then((data) => {
     console.log(data)
     if (data.code === 0) {
-      return data.result
+      alert(data.code)
+      success(data)
     } else {
       http.open({
-        body: data.message,
+        body: data.messages,
         color: 'error',
         timeout: 7000
       })

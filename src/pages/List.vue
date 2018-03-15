@@ -17,14 +17,15 @@
       <v-icon dark>add</v-icon>
     </v-btn>
       <v-card>
+        <v-form v-model="valid" ref="form" lazy-validation>
         <v-card-title>
           <span class="headline">{{ this.item.edit ? 'EDIT' : 'ADD' }}</span>
         </v-card-title>
         <v-card-text>
           <v-container grid-list-md>
             <v-layout wrap>
-              <v-flex xs12 sm6 md4 v-for="(fds, index) in form.fields" :key="fds[0]">
-                <v-text-field :label="fds.label" :required="fds.required" v-model="item[index]" ></v-text-field>
+              <v-flex xs12 sm6 md4 v-for="(fds, index) in form.fields" :key="fds[index]">
+                <v-text-field :label="fds.label" required="required" :rules="fds.rules ? setRule(fds.rules,index) : []"  v-model="item[index]" ></v-text-field>
               </v-flex>
             </v-layout>
           </v-container>
@@ -32,8 +33,10 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click.native="close">Close</v-btn>
-          <v-btn color="blue darken-1" flat @click.native="save">Save</v-btn>
+          <v-btn color="blue darken-1"  flat @click.native="save">Save</v-btn>
+         
         </v-card-actions>
+        </v-form>
       </v-card>
     </v-dialog>
     </v-flex>
@@ -58,15 +61,15 @@
           </v-btn>
         </td> -->
          <td v-if='actions !== false' width='200'>
-           <v-btn  v-if="actions.edit && form.open != 'page'" icon class="mx-0" @click.native.stop="showEdit(props.item)">
+           <v-btn  v-if="actions.edit && form.open != 'page' && options.edit !== false" icon class="mx-0" @click.native.stop="showEdit(props.item)">
             <v-icon color="teal">edit</v-icon>
           </v-btn>
          <template v-for=" (value, action) in actions">
-           <v-btn v-if="action != 'delete' && form.open == 'page'" icon  :key="action+1"  :to="{name: action, params: {resource,id:props.item.id}}">
+           <v-btn v-if="action != 'delete' && form.open == 'page' && options.delete !== false" icon  :key="action+1"  :to="{name: action, params: {resource,id:props.item.id}}">
              <v-icon> {{action.icon ? action.icon : action}} </v-icon>
            </v-btn>  
            
-          <v-btn v-if="action == 'delete'" icon class="mx-0" :key="action" @click="deleteItem(props.index)">
+          <v-btn v-if="action == 'delete' && options.delete !== false" icon class="mx-0" :key="action" @click="deleteItem(props.index)">
             <v-icon color="pink">delete</v-icon>
           </v-btn>
           
@@ -79,6 +82,7 @@
           <template v-for="btns in actionBtn">
           <v-btn icon class="mx-0" :key="btns.name" @click="btns.action(props.item)">
             <v-icon :color="btns.color">{{btns.icon}}</v-icon>
+            
           </v-btn>
           </template>
           
@@ -96,6 +100,13 @@
 import actions from '@/actions'
 const getDefaultData = () => {
   return {
+    rules: {
+    },
+    nimabi: {
+      required: v => !!v,
+      email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v)
+    },
+    valid: true,
     form: {
       model: {},
       fields: {},
@@ -182,8 +193,19 @@ export default {
       })
     },
     fetchForm (item) {
-      this.$http.get(`${this.resource}/form`).then((data) => {
+      const self = this
+      this.$http.get(`${this.resource}/form`, {
+        params: {id: item.id}
+      }).then((data) => {
         this.form = data
+        for (let itemx in this.form.rules) {
+          let funs = this.form.rules[itemx].split('|')
+          for (let i in funs) {
+            this.rules[itemx + '.' + funs[i]] = function (val) {
+              return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
+            }
+          }
+        }
       })
     },
     fetch () {
@@ -284,7 +306,7 @@ export default {
         console.log(data)
         if (data.result) {
           this.$http.open({
-            body: data.messages,
+            body: data.messages || 'errors',
             color: 'success',
             timeout: 2000
           })
@@ -305,20 +327,28 @@ export default {
     },
     save () {
       if (this.item.edit) {
-        // edit item
         this.item.edit = false
       } else {
-        this.$http.post(`${this.resource}`, this.item)
-          .then((data) => {
-            this.$http.open({
-              body: data.messages,
-              color: 'success',
-              timeout: 2000
-            })
+        if (this.$refs.form.validate()) {
+
+        }
+        const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
+        if (!valid.passes()) {
+          const errors = valid.getErrors()
+          console.log(errors)
+          return
+        }
+        const success = (data) => {
+          this.$http.open({
+            body: data.messages,
+            color: 'success',
+            timeout: 1000
           })
-        this.items.push(this.item)
+          this.dialog = false
+          this.items.push(this.item)
+        }
+        this.$http.ajax(this.$http.post(`${this.resource}`, this.item), success)
       }
-      this.dialog = false
     },
     onSaveEdit (data) {
       if (data.id) {
@@ -335,10 +365,17 @@ export default {
     },
     add () {
       this.item.edit = false
-      this.item = {}
-      for (let n in this.form.fields) {
-        this.item[n] = ''
-      }
+      // this.fetchForm(this.item)
+      // for (let n in this.form.fields) {
+      //   this.item[n] = ''
+      // }
+    },
+    setRule (rules, index) {
+      let rule = []
+      rules.split('|').map((item) => {
+        rule.push(this.rules[index + '.' + item])
+      })
+      return rule
     }
   }
 }

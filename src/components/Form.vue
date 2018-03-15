@@ -159,6 +159,7 @@ export default {
           this.$emit('error', status, data)
         })
       } else {
+        alert(10)
         const errors = valid.getErrors()
         this.hasError = true
         this.errors = errors

@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@transplace/vuetify": "^1.0.0-beta.5-TP.1.3",
-    "Validator": "^1.0.5",
+    "Validator": "^1.0.4",
     "adonis-websocket-client": "^1.0.2",
     "buefy": "^0.6.3",
     "i": "^0.3.6",
