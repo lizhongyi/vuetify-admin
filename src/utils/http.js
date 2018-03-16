@@ -68,7 +68,6 @@ http.ajax = (Promise, success) => {
   Promise.then((data) => {
     console.log(data)
     if (data.code === 0) {
-      alert(data.code)
       success(data)
     } else {
       http.open({

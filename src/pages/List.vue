@@ -24,8 +24,13 @@
         <v-card-text>
           <v-container grid-list-md>
             <v-layout wrap>
-              <v-flex xs12 sm6 md4 v-for="(fds, index) in form.fields" :key="fds[index]">
-                <v-text-field :label="fds.label" required="required" :rules="fds.rules ? setRule(fds.rules,index) : []"  v-model="item[index]" ></v-text-field>
+              <v-flex xs12 sm12 md12 lg6 v-for="(fds, index) in form.fields" :key="fds[index]">
+                <v-text-field :label="fds.label" 
+                :error-messages="errorMessages[index]"
+                required="required"
+                :rules="form.rules[index] ? setRule(form.rules[index],index) : []"
+                v-model="item[index]" >
+                </v-text-field>
               </v-flex>
             </v-layout>
           </v-container>
@@ -33,7 +38,24 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click.native="close">Close</v-btn>
-          <v-btn color="blue darken-1"  flat @click.native="save">Save</v-btn>
+           <v-spacer></v-spacer>
+          <v-slide-x-reverse-transition>
+            <v-tooltip
+              left
+              v-if="formHasErrors"
+            >
+              <v-btn
+                icon
+                @click="resetForm"
+                slot="activator"
+                class="my-0"
+              >
+                <v-icon>refresh</v-icon>
+              </v-btn>
+              <span>Refresh form</span>
+            </v-tooltip>
+          </v-slide-x-reverse-transition>
+          <v-btn color="blue darken-1" :disabled="!valid"  flat @click.native="save">Save</v-btn>
          
         </v-card-actions>
         </v-form>
@@ -104,9 +126,13 @@ const getDefaultData = () => {
     },
     nimabi: {
       required: v => !!v,
-      email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v)
+      email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v),
+      min: v => v && v.length >= 6,
+      max: v => v && v.length <= 10
     },
+    formHasErrors: false,
     valid: true,
+    errorMessages: [],
     form: {
       model: {},
       fields: {},
@@ -200,9 +226,28 @@ export default {
         this.form = data
         for (let itemx in this.form.rules) {
           let funs = this.form.rules[itemx].split('|')
+          let minMax
+          let min
+          let max
           for (let i in funs) {
-            this.rules[itemx + '.' + funs[i]] = function (val) {
-              return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
+            minMax = funs[i].split(':')
+            if (minMax[0] === 'min') {
+              funs[i] = 'min'
+              min = minMax[1]
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                return (val && val.length) >= min || self.form.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
+              }
+            } else if (minMax[0] === 'max') {
+              funs[i] = 'max'
+              max = minMax[1]
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                return (val && val.length) <= max || self.form.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
+              }
+            } else {
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                console.log(minMax)
+                return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
+              }
             }
           }
         }
@@ -334,8 +379,8 @@ export default {
         }
         const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
         if (!valid.passes()) {
-          const errors = valid.getErrors()
-          console.log(errors)
+          // const errors = valid.getErrors()
+          // this.errorMessages = errors
           return
         }
         const success = (data) => {
@@ -373,9 +418,18 @@ export default {
     setRule (rules, index) {
       let rule = []
       rules.split('|').map((item) => {
-        rule.push(this.rules[index + '.' + item])
+        if (item.split(':')[1]) {
+          let newItem = item.split(':')[0]
+          rule.push(this.rules[index + '.' + newItem])
+        } else {
+          rule.push(this.rules[index + '.' + item])
+        }
       })
+      console.log(rule)
       return rule
+    },
+    resetForm () {
+
     }
   }
 }
