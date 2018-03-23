@@ -133,6 +133,12 @@ export default {
 
     onSubmit () {
       const valid = global.validator.make(this.model, this.rules, this.messages)
+      valid.extend('unique', function (data, field, message, args, get) {
+        return new Promise(function (resolve, reject) {
+          // const fieldValue = get(data, field)
+          return resolve('Unsupported in client.')
+        })
+      }, this.$t('Field should be unique.'))
       if (valid.passes()) {
         this.$emit('input', this.model)
         if (!this.autoSubmit) {

@@ -19,7 +19,7 @@
       <v-card>
         <v-form v-model="valid" ref="form" lazy-validation>
         <v-card-title>
-          <span class="headline">{{ this.item.edit ? 'EDIT' : 'ADD' }}</span>
+          <span class="headline">{{ this.isShowEdit  ? 'EDIT' : 'ADD' }}</span>
         </v-card-title>
         <v-card-text>
           <v-container grid-list-md>
@@ -36,7 +36,6 @@
           </v-container>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click.native="close">Close</v-btn>
            <v-spacer></v-spacer>
           <v-slide-x-reverse-transition>
@@ -55,7 +54,7 @@
               <span>Refresh form</span>
             </v-tooltip>
           </v-slide-x-reverse-transition>
-          <v-btn color="blue darken-1" :disabled="!valid"  flat @click.native="save">Save</v-btn>
+          <v-btn color="blue darken-1"   flat @click.native="save">Save</v-btn>
          
         </v-card-actions>
         </v-form>
@@ -95,7 +94,7 @@
             <v-icon color="pink">delete</v-icon>
           </v-btn>
           
-          <!-- <v-btn v-if="action == 'edit'" icon class="mx-0" :key="action" :to="{name: action, params: {resource,id:props.item.id}}">
+          <!-- <v-btn v-if="action == 'edit'" icon class="mx-0" :key="action" :to="{name: 'create', params: {resource,id:props.item.id}}">
             <v-icon color="green">edit</v-icon>
           </v-btn> -->
 
@@ -128,7 +127,8 @@ const getDefaultData = () => {
       required: v => !!v,
       email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v),
       min: v => v && v.length >= 6,
-      max: v => v && v.length <= 10
+      max: v => v && v.length <= 10,
+      phone: v => /^[1][3,4,5,7,8][0-9]{9}$/.test(v)
     },
     formHasErrors: false,
     valid: true,
@@ -340,6 +340,7 @@ export default {
       this.fetchData()
     },
     editItem (item) {
+      alert(1)
       this.currentItem = item
       this.fetchForm(item)
       this.dialog = true
@@ -371,29 +372,37 @@ export default {
       this.dialog = false
     },
     save () {
-      if (this.item.edit) {
-        this.item.edit = false
+      let method, params
+      if (!this.isShowEdit) {
+        method = 'post'
+        params = ''
       } else {
-        if (this.$refs.form.validate()) {
-
-        }
-        const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
-        if (!valid.passes()) {
-          // const errors = valid.getErrors()
-          // this.errorMessages = errors
-          return
-        }
-        const success = (data) => {
-          this.$http.open({
-            body: data.messages,
-            color: 'success',
-            timeout: 1000
-          })
-          this.dialog = false
-          this.items.push(this.item)
-        }
-        this.$http.ajax(this.$http.post(`${this.resource}`, this.item), success)
+        method = 'patch'
+        params = `/${this.item.id}`
       }
+      if (this.$refs.form.validate()) {
+
+      }
+      const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
+      valid.extend('phone', function (v) {
+        return !!v
+      }, ':nshashasas')
+      if (!valid.passes()) {
+        // const errors = valid.getErrors()
+        // this.errorMessages = errors
+        return
+      }
+      const success = (data) => {
+        this.$http.open({
+          body: data.messages,
+          color: 'success',
+          timeout: 1000
+        })
+        this.dialog = false
+        this.$refs.form.reset()
+        this.fetchData()
+      }
+      this.$http.ajax(this.$http[method](`${this.resource}${params}`, this.item), success)
     },
     onSaveEdit (data) {
       if (data.id) {
@@ -403,17 +412,20 @@ export default {
     },
     showEdit (item) {
       this.item = item
-      this.item.edit = true
-      // this.fetchForm(item)
-      console.log(item)
+      this.fetchForm(item)
       this.dialog = true
+      this.isShowEdit = true
+      this.fetchForm(item)
+      console.log(item)
     },
     add () {
-      this.item.edit = false
-      // this.fetchForm(this.item)
-      // for (let n in this.form.fields) {
-      //   this.item[n] = ''
-      // }
+      this.edit = false
+      this.isShowEdit = false
+      this.$refs.form.reset()
+      this.fetchForm(this.item)
+      for (let n in this.form.fields) {
+        this.item[n] = ''
+      }
     },
     setRule (rules, index) {
       let rule = []

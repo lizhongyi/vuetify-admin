@@ -1,6 +1,6 @@
 <template lang="pug">
 v-layout
-  v-flex(xs8)
+  v-flex(xs12)
     my-v-form(v-model="model", v-bind="$data", :method="method", :action="action", @success="onSuccess")
       div(slot="buttons",class="my-4")
         
@@ -65,7 +65,6 @@ export default {
       this.$http.get(`${this.resource}/form`, {
         params: {id: this.id}
       }).then((data) => {
-        console.log(data)
         this.model = data.model
         this.fields = data.fields
         this.rules = data.rules
