@@ -1,7 +1,7 @@
 <template lang="pug">
 v-layout
   v-flex(xs12)
-    my-v-form(v-model="model", v-bind="$data", :method="method", :action="action", @success="onSuccess")
+    my-form(v-model="model", v-bind="$data", :method="method", :action="action", @success="onSuccess")
       div(slot="buttons",class="my-4")
         
         v-btn(dark, class="grey",@click.native="$root.back()") 
@@ -75,9 +75,10 @@ export default {
 
     },
     onSuccess (data) {
-      this.$router.push({name: 'grid', params: {resource: this.resource}})
+      data.id = 1
+      // this.$router.push({name: 'list', params: {resource: this.resource}})
       if (data.id) {
-        // this.$router.go(-1)
+        this.$router.go(-1)
       }
     }
   },

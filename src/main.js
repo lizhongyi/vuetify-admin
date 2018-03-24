@@ -15,6 +15,7 @@ import VueQuillEditor from 'vue-quill-editor'
 import validator from 'Validator'
 import config from './config'
 import VForm from './components/Form.vue'
+import MyForm from './components/My-form.vue'
 import VGrid from './components/Grid.vue'
 import VField from './components/Field.vue'
 import VueTimeago from 'vue-timeago'
@@ -61,6 +62,7 @@ router.beforeEach((to, from, next) => {
 })
 
 Vue.component('my-v-form', VForm)
+Vue.component('my-form', MyForm)
 Vue.component('v-grid', VGrid)
 Vue.component('v-field', VField)
 

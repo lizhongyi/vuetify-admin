@@ -8,7 +8,7 @@
                 :error-messages="errorMessages[index]"
                 required="required"
                 :rules="rules[index] ? setRule(rules[index],index) : []"
-                v-model="item[index]" >
+                v-model="value[index]" >
                 </v-text-field>
               </v-flex>
             </v-layout>
@@ -167,20 +167,26 @@ export default {
       if (this.$refs.form.validate()) {
 
       }
-      const valid = global.validator.make(this.item, this.rules, this.messages)
+      const valid = global.validator.make(this.value, this.rules, this.messages)
       valid.extend('phone', function (v) {
         return !!v
-      },
-      ':nshashasas')
+      }, ':nshashasas')
       if (valid.passes()) {
         this.$emit('input', this.model)
         if (!this.autoSubmit) {
           this.$emit('submit')
           return false
         }
-
-        this.$http[this.method](this.action, this.item).then(({ data }) => {
-          this.$emit('success', data)
+        this.$http[this.method](this.action, this.value).then((data) => {
+          if (data.code === 0) {
+            this.$emit('success', data)
+          } else {
+            this.$http.open({
+              body: data.messages || data.message,
+              color: 'error',
+              timeout: 8000
+            })
+          }
           this.hasError = false
         }).catch(({ response }) => {
           let { status, data } = response

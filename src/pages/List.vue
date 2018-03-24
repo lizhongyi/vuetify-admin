@@ -94,9 +94,9 @@
             <v-icon color="pink">delete</v-icon>
           </v-btn>
           
-          <!-- <v-btn v-if="action == 'edit'" icon class="mx-0" :key="action" :to="{name: 'create', params: {resource,id:props.item.id}}">
-            <v-icon color="green">edit</v-icon>
-          </v-btn> -->
+          <v-btn v-if="action == 'edit'" icon class="mx-0" :key="action.icon" :to="{name: action, params: {resource,id:props.item.id}}">
+            <v-icon color="green">{{action}}</v-icon>
+          </v-btn>
 
         </template>  
           
@@ -399,8 +399,7 @@ export default {
           timeout: 1000
         })
         this.dialog = false
-        this.$refs.form.reset()
-        this.fetchData()
+       // this.fetchData()
       }
       this.$http.ajax(this.$http[method](`${this.resource}${params}`, this.item), success)
     },
@@ -415,7 +414,6 @@ export default {
       this.fetchForm(item)
       this.dialog = true
       this.isShowEdit = true
-      this.fetchForm(item)
       console.log(item)
     },
     add () {
