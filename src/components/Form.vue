@@ -8,9 +8,9 @@ div
       v-tabs-content(v-for='(fields, key) in group.children', :key='key', :id="'tab-' + key")
         v-card(flat)
           v-card-text
-            v-field(v-for='(field, name) in fields', :key='name', :name="name", :field="field", v-model="model[name]")
+            v-field(v-for='(field, name) in fields', :key='name', :name="name", :rules="[rules[name]]", :field="field", v-model="model[name]")
     v-layout(v-bind="{[inline? 'row': 'column']: true}", v-if="!groupBy")
-      v-field(v-for='(field, name) in fields', :key='name', :name="name", :field="field", v-model="model[name]")
+      v-field(v-for='(field, name) in fields', :key='name', :name="name", :rules="['email']", :field="field", v-model="model[name]")
       v-alert.py-2(error, v-model='hasError')
         div(v-for='error in errors')  {{error.message}}
       slot
@@ -133,7 +133,7 @@ export default {
 
     onSubmit () {
       const valid = global.validator.make(this.model, this.rules, this.messages)
-      valid.extend('unique', function (data, field, message, args, get) {
+      valid.extend('phone', function (data, field, message, args, get) {
         return new Promise(function (resolve, reject) {
           // const fieldValue = get(data, field)
           return resolve('Unsupported in client.')
@@ -146,8 +146,9 @@ export default {
           return false
         }
 
-        this.$http[this.method](this.action, this.model).then(({ data }) => {
-          this.$emit('success', data)
+        this.$http[this.method](this.action, this.model).then((data) => {
+          console.log(data)
+          this.$emit('onSuccess', data)
           this.hasError = false
         }).catch(({ response }) => {
           let { status, data } = response
@@ -170,7 +171,7 @@ export default {
         this.hasError = true
         this.errors = errors
         this.$emit('error', errors)
-        // this.$bus.showMessage('error', 'error')
+        this.$bus.showMessage('error', 'error')
       }
     }
   },

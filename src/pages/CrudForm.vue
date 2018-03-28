@@ -1,94 +1,230 @@
-<template lang="pug">
-v-layout
-  v-flex(xs12)
-    my-form(v-model="model", v-bind="$data", :method="method", :action="action", @success="onSuccess")
-      div(slot="buttons",class="my-4")
-        
-        v-btn(dark, class="grey",@click.native="$root.back()") 
-          v-icon(dark, left) chevron_left 
-          span {{$t('Back')}}
-        v-btn(primary, dark, type='submit') {{$t('Submit')}}
-          v-icon(right, dark) send
+<template>
+  <div>
+    <v-layout>
+      <v-flex md12>
+        <v-form v-model="valid" ref="form" lazy-validation>
+        <v-card-title>
+          <span class="headline">{{ resource }} / {{ formTitle }}</span>
+        </v-card-title>
+        <v-card-text>
+            <v-layout wrap>
+              <v-flex xs12 sm12 md12 lg12 v-for="(fds, index) in form.fields" :key="fds[index]">
+                 <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="item[index]">
+                </v-select>
+                <template v-else-if="'radios' === fds.type">
+                  <v-layout row wrap>
+                     <v-radio-group v-model="item[index]">
+                        <v-radio mandatory
+                          v-for="option in fds.choices"
+                          :key="option.text"
+                          :value='option.value'
+                          :label='option.text'
+                        ></v-radio>
+                      </v-radio-group>
+                  </v-layout>
+                </template>
+                <template v-else-if="'checkboxes' === fds.type" >
+                  <v-layout  row wrap>
+                    <v-checkbox 
+                      v-for="option in fds.choices"
+                      :key="option.text"
+                      :value='option.value'
+                      :label='option.text'
+                      v-model='item[index]'
+                    ></v-checkbox>
+                  </v-layout>
+                </template>
+                 <template v-else-if="['date', 'datetime', 'time'].indexOf(fds.type) > -1">
+                  <v-menu>
+                    <v-text-field slot='activator' v-model="item[index]" :label="$t(fds.label)"></v-text-field>
+                    <v-date-picker v-model="item[index]"  no-title scrollable actions></v-date-picker>
+                  </v-menu>
+                </template> 
+                <template v-else>
+                <v-text-field :label="fds.label" 
+                :error-messages="errorMessages[index]"
+                required="required"
+                :rules="form.rules[index] ? setRule(form.rules[index],index) : []"
+                v-model="item[index]" >
+                </v-text-field>
+                </template>
+              </v-flex>
+            </v-layout>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="blue darken-1" flat @click.native="close">Close</v-btn>
+           <v-spacer></v-spacer>
+          <v-slide-x-reverse-transition>
+            <v-tooltip
+              left
+              v-if="formHasErrors"
+            >
+              <v-btn
+                icon
+                @click="resetForm"
+                slot="activator"
+                class="my-0"
+              >
+                <v-icon>refresh</v-icon>
+              </v-btn>
+              <span>Refresh form</span>
+            </v-tooltip>
+          </v-slide-x-reverse-transition>
+          <v-btn color="blue darken-1"   flat @click.native="save">Save</v-btn>
+        </v-card-actions>
+        </v-form>
+      </v-card>
+    </v-flex>
+    </v-layout>
+   
+  </div>
 </template>
-
 <script>
-
-export default {
-
-  data () {
-    return {
+const getDefaultData = () => {
+  return {
+    rules: {
+    },
+    nimabi: {
+      required: v => !!v,
+      email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v),
+      min: v => v && v.length >= 6,
+      max: v => v && v.length <= 10,
+      phone: v => /^[1][3,4,5,7,8][0-9]{9}$/.test(v)
+    },
+    formHasErrors: false,
+    valid: true,
+    errorMessages: [],
+    form: {
       model: {},
       fields: {},
       rules: {},
-      messages: {}
-    }
-  },
+      messages: {},
+      open: null
+    },
+    item: {},
+  }
+}
+export default {
+  data: getDefaultData,
   computed: {
-    method () {
-      return this.isEdit ? 'patch' : 'post'
-    },
-    action () {
-      if (this.isEdit) {
-        return `${this.resource}/${this.id}`
-      } else {
-        return `${this.resource}`
-      }
-    },
-    isEdit () {
-      return !!this.id
+    formTitle () {
+      return this.$route.name === 'edit' ? 'Edit Item' : 'New Item'
     },
     resource () {
       return this.$route.params.resource
-    },
-    id () {
-      return this.$route.params.id
-    }
-
-  },
-  watch: {
-    '$route': 'fetch',
-    'model': 'updateFields'
-  },
-  methods: {
-    getFieldError (fieldName) {
-      for (let k in this.errors) {
-        let error = this.errors[k]
-        if (error.field === fieldName) {
-          return error.message
-        }
-      }
-    },
-    updateFields () {
-
-    },
-    fetch () {
-      this.$http.get(`${this.resource}/form`, {
-        params: {id: this.id}
-      }).then((data) => {
-        this.model = data.model
-        this.fields = data.fields
-        this.rules = data.rules
-        this.messages = data.messages
-      })
-    },
-    onSubmit () {
-
-    },
-    onSuccess (data) {
-      data.id = 1
-      // this.$router.push({name: 'list', params: {resource: this.resource}})
-      if (data.id) {
-        this.$router.go(-1)
-      }
     }
   },
   created () {
-    let pageTitle = (this.isEdit ? 'Update' : 'Create') + ' ' + global.helper.i.titleize(global.helper.i.singularize(this.resource))
-    this.$store.commit('setPageTitle', pageTitle)
+    this.initialize()
   },
-  mounted () {
-    // this.$bus.showMessage('success', 'success')
-    this.fetch()
+  methods: {
+    initialize () {
+      this.fetchForm(this.$route.params)
+      this.$route.name === 'edit'
+    },
+    fetchForm (item) {
+      const self = this
+      this.$http.get(`${this.resource}/form`, {
+        params: {id: item.id || 58}
+      }).then((data) => {
+        this.form = data
+          this.item = this.form.model
+          for ( let index in this.form.fields) {
+            if(this.$route.name === 'edit'){
+              if(this.form.fields[index].type === 'checkboxes' ) {
+                this.item[index] =  this.item[index] ? this.form.model[index].split(",") : []
+                console.log(this.item[index])
+              }
+            } else {
+              this.item[index] = null
+              if(this.form.fields[index].type === 'checkboxes' ) {
+                this.item[index] = []
+              }
+            }
+          }
+        
+        for (let itemx in this.form.rules) {
+          let funs = this.form.rules[itemx].split('|')
+          let minMax
+          let min
+          let max
+          for (let i in funs) {
+            minMax = funs[i].split(':')
+            if (minMax[0] === 'min') {
+              funs[i] = 'min'
+              min = minMax[1]
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                return (val && val.length) >= min || self.form.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
+              }
+            } else if (minMax[0] === 'max') {
+              funs[i] = 'max'
+              max = minMax[1]
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                return (val && val.length) <= max || self.form.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
+              }
+            } else {
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                console.log(minMax)
+                return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
+              }
+            }
+          }
+        }
+      })
+    },
+    save () {
+      let method, params
+      if (this.$route.name !== 'edit') {
+        method = 'post'
+        params = ''
+      } else {
+        method = 'patch'
+        params = `/${this.item.id}`
+      }
+      if (this.$refs.form.validate()) {
+
+      }
+      for(let index in this.item) {
+        if(Object.prototype.toString.call(this.item[index] ) == '[object Array]') {
+          this.item[index] = this.item[index].toString()
+        }
+      }
+      const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
+      valid.extend('phone', function (v) {
+        return !!v
+      }, ':nshashasas')
+      if (!valid.passes()) {
+        // const errors = valid.getErrors()
+        // this.errorMessages = errors
+        return
+      }
+      const success = (data) => {
+        this.$router.push(`/crud/${this.resource}`)
+      }
+      this.$http.ajax(this.$http[method](`${this.resource}${params}`, this.item), success)
+    },
+    onSaveEdit (data) {
+      if (data.id) {
+        this.isShowEdit = false
+        this.fetchData()
+      }
+    },
+    setRule (rules, index) {
+      let rule = []
+      rules.split('|').map((item) => {
+        if (item.split(':')[1]) {
+          let newItem = item.split(':')[0]
+          rule.push(this.rules[index + '.' + newItem])
+        } else {
+          rule.push(this.rules[index + '.' + item])
+        }
+      })
+      console.log(rule)
+      return rule
+    },
+    resetForm () {
+
+    }
   }
 }
 </script>

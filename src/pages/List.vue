@@ -24,13 +24,72 @@
         <v-card-text>
           <v-container grid-list-md>
             <v-layout wrap>
-              <v-flex xs12 sm12 md12 lg6 v-for="(fds, index) in form.fields" :key="fds[index]">
+              <v-flex xs12 sm12 md12 lg12 v-for="(fds, index) in form.fields" :key="fds[index]">
+
+                 <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="item[index]">
+                </v-select>
+                <template v-else-if="'radios' === fds.type">
+                
+                  <v-layout row wrap>
+            
+                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
+                        <v-radio
+                        v-model='value[index]'
+                        hide-details
+                        :value='option.value'
+                        :label='option.text'
+                        
+                        ></v-radio>
+
+                     </v-flex> -->
+                    
+                     <v-radio-group v-model="item[index]">
+                        <v-radio mandatory
+                          v-for="option in fds.choices"
+                          :key="option.text"
+                          :value='option.value'
+                          :label='option.text'
+                        ></v-radio>
+                      </v-radio-group>
+                  </v-layout>
+                </template>
+
+
+
+                <template v-else-if="'checkboxes' === fds.type" >
+                
+                  <v-layout  row wrap>
+            
+                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
+                        <v-radio
+                        v-model='value[index]'
+                        hide-details
+                        :value='option.value'
+                        :label='option.text'
+                        
+                        ></v-radio>
+
+                     </v-flex> -->
+                       
+                    
+                        <v-checkbox 
+                          v-for="option in fds.choices"
+                          :key="option.text"
+                          :value='option.value'
+                          :label='option.text'
+                          v-model='item[index]'
+                        ></v-checkbox>
+                     
+                  </v-layout>
+                </template>
+                <template v-else>
                 <v-text-field :label="fds.label" 
                 :error-messages="errorMessages[index]"
                 required="required"
                 :rules="form.rules[index] ? setRule(form.rules[index],index) : []"
                 v-model="item[index]" >
                 </v-text-field>
+                </template>
               </v-flex>
             </v-layout>
           </v-container>
@@ -166,7 +225,8 @@ const getDefaultData = () => {
     currentItem: false,
     items: [],
     dialog: false,
-    item: {}
+    item: {},
+    sel: {}
   }
 }
 export default {
@@ -410,19 +470,30 @@ export default {
       }
     },
     showEdit (item) {
-      this.item = item
-      this.fetchForm(item)
+      this.item = {}
+      this.$refs.form.reset()
+      for (let n in this.form.fields) {
+        if(this.form.fields[n].type === 'checkboxes') {
+          this.item[n] = []
+        } else {
+          this.item[n] = item[n]
+        } 
+      }
       this.dialog = true
       this.isShowEdit = true
-      console.log(item)
+      
     },
     add () {
       this.edit = false
       this.isShowEdit = false
       this.$refs.form.reset()
-      this.fetchForm(this.item)
+     // this.fetchForm(this.item)
       for (let n in this.form.fields) {
-        this.item[n] = ''
+        if(this.form.fields[n].type === 'checkboxes') {
+          this.item[n] = []
+        } else {
+          this.item[n] = ''
+        } 
       }
     },
     setRule (rules, index) {

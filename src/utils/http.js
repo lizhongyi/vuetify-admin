@@ -6,7 +6,7 @@ import store from '../store'
 // import router from 'vue-router'
 var http = axios.create({
   baseURL: config.api,
-  timeout: 6000
+  timeout: 12000
 })
 
 http.getToken = function () {
@@ -42,7 +42,7 @@ http.interceptors.response.use(
       }
     } else {
       http.open({
-        body: response.data.message,
+        body: response.data.message || response.data.messages,
         color: 'error',
         timeout: 7000
       })
@@ -71,7 +71,7 @@ http.ajax = (Promise, success) => {
       success(data)
     } else {
       http.open({
-        body: data.messages,
+        body: data.messages || data.message,
         color: 'error',
         timeout: 7000
       })

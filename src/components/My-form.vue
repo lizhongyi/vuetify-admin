@@ -3,10 +3,76 @@
         <v-card-text>
           <v-container grid-list-md>
             <v-layout wrap>
-              <v-flex xs12 sm12 md12 lg6 v-for="(fds, index) in fields" :key="fds[index]">
-                <v-text-field :label="fds.label" 
+              <v-flex xs12 sm12 md12  v-for="(fds, index) in fields" :key="fds[index]">
+                 
+                <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="value[index]">
+                </v-select>
+                <template v-else-if="'radios' === fds.type">
+                
+                  <v-layout row wrap>
+            
+                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
+                        <v-radio
+                        v-model='value[index]'
+                        hide-details
+                        :value='option.value'
+                        :label='option.text'
+                        
+                        ></v-radio>
+
+                     </v-flex> -->
+                    
+                     <v-radio-group v-model="value[index]">
+                        <v-radio mandatory
+                          v-for="option in fds.choices"
+                          :key="option.text"
+                          :value='option.value'
+                          :label='option.text'
+                        ></v-radio>
+                      </v-radio-group>
+                  </v-layout>
+                </template>
+
+
+
+                <template v-else-if="'checkboxes' === fds.type" >
+                
+                  <v-layout  :seta="setA(index)" row wrap>
+            
+                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
+                        <v-radio
+                        v-model='value[index]'
+                        hide-details
+                        :value='option.value'
+                        :label='option.text'
+                        
+                        ></v-radio>
+
+                     </v-flex> -->
+                       
+                    
+                        <v-checkbox 
+                          v-for="option in fds.choices"
+                          :key="option.text"
+                          :value='option.value'
+                          :label='option.text'
+                          v-model='value[index]'
+                        ></v-checkbox>
+                     
+                  </v-layout>
+                </template>
+
+
+                <template v-else-if="['date', 'datetime', 'time'].indexOf(fds.type) > -1">
+                  <v-menu>
+                    <v-text-field slot='activator' v-model="value[index]" :label="$t(fds.label)"></v-text-field>
+                    <v-date-picker v-model="value[index]"  no-title scrollable actions></v-date-picker>
+                  </v-menu>
+                </template>    
+                <v-text-field v-else :label="fds.label" 
                 :error-messages="errorMessages[index]"
                 required="required"
+                validate-on-blur
                 :rules="rules[index] ? setRule(rules[index],index) : []"
                 v-model="value[index]" >
                 </v-text-field>
@@ -110,7 +176,9 @@ export default {
         phone: v => /^[1][3,4,5,7,8][0-9]{9}$/.test(v)
       },
       rulesFun: {},
-      item: {}
+      item: {
+       
+      }
     }
   },
 
@@ -257,9 +325,15 @@ export default {
           }
         }
       }
+    },
+    setA (index) {
+       this.item[index] = []
+       console.log(10)
     }
   },
   mounted () {
+    
+    //this.item = this.value
     // this.$bus.showMessage('success', 'success')
   },
   created () {

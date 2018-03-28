@@ -8,7 +8,7 @@
               v-list-tile-content
                 v-list-tile-title {{ item.title }}
             v-list-tile(v-for='subItem in item.items', :key='subItem.href',:to='subItem.href', v-bind:router='!subItem.target', ripple, v-bind:disabled='subItem.disabled', v-bind:target='subItem.target')
-              v-list-tile-content
+              v-list-tile-content(:prepend-icon='subItem.icon')
                 v-list-tile-title {{ subItem.title }}
               v-list-tile-action
                 v-icon {{ subItem.icon }}
@@ -87,7 +87,7 @@ export default {
     },
     fetchMenu () {
       // fetch menu from server
-     // this.$http.get('menu').then(({data}) => this.$store.commit('setMenu', data.data))
+      // this.$http.get('menu').then((data) => { this.$store.commit('setMenu', data.data)})
     }
   },
   created () {

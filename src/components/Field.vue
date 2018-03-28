@@ -27,7 +27,7 @@ v-flex(xs12)
     div.pt-2
       dropzone(:id="'dropzone_' + name", :url="$store.state.config.ajaxUploadUrl")
         input(type='hidden', v-model='model')
-  v-text-field(v-else, v-model='model', v-bind='field', :label="$t(field.label)" :placeholder="$t(field.placeholder)" type="text",:multiLine="field.type == 'textarea'")
+  v-text-field(v-else, v-model='model', v-bind='field', :rules="rules" :label="$t(field.label)" :placeholder="$t(field.placeholder)" type="text",:multiLine="field.type == 'textarea'")
 </template>
 
 <script>
@@ -45,6 +45,9 @@ export default {
     },
     value: {
       required: false
+    },
+    rules: {
+      type: Array
     }
   },
   data () {

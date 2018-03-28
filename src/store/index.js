@@ -23,7 +23,8 @@ const store = new Vuex.Store({
       y: 'top',
       show: false
     },
-    config: config
+    config: config,
+    formData: {}
 
   },
   mutations: {
@@ -48,6 +49,9 @@ const store = new Vuex.Store({
     },
     showMessage (state, type, body) {
       state.message = { type, body }
+    },
+    setForm  (state, data) {
+      state.formData = data
     }
   },
   actions: {
