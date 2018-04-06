@@ -67,7 +67,7 @@ http.open = function (options = {}) {
 http.ajax = (Promise, success) => {
   Promise.then((data) => {
     console.log(data)
-    if (data.code === 0) {
+    if (data.code === 0 || data !== true) {
       success(data)
     } else {
       http.open({

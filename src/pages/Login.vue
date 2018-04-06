@@ -53,7 +53,6 @@
 </template>
 
 <script>
-import axios from 'axios'
 export default {
 
   data () {
@@ -90,12 +89,10 @@ export default {
       this.$router.push($location)
     },
     submit () {
-      if (this.model.username && this.model.password) {
-        axios.post('/api/login', this.model).then((data) => {
-          this.onSuccess(data.data)
-          console.log(data.data)
-        })
+      const success = (data) => {
+        this.onSuccess(data)
       }
+      this.$http.ajax(this.$http.post(`/login`, this.model), success)
     }
   },
 
