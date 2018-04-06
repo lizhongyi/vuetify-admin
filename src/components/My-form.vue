@@ -41,6 +41,7 @@
                 <v-text-field :label="fds.label" 
                 :error-messages="errorMessages[index]"
                 required="required"
+                :disabled="isEdit() ? fds.disabled : false"
                 :rules="form.rules[index] ? setRule(form.rules[index],index) : []"
                 v-model="item[index]" >
                 </v-text-field>
@@ -103,7 +104,7 @@ export default {
   data: getDefaultData,
   computed: {
     formTitle () {
-      return this.$route.name === 'edit' ? 'Edit Item' : 'New Item'
+      return (this.isEdit()) ? 'Edit Item' : 'New Item'
     },
     resource () {
       return this.$route.params.resource
