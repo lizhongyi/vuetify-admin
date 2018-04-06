@@ -1,181 +1,90 @@
 <template>
   <div>
-  
     <v-layout>
-      <v-flex md2>
-    
-
+      <v-flex md2></v-flex>
+      <v-flex md9>
+        <my-v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields" :fields='filters.fields' @submit='doSearch' submitButtonText='Search' submitButtonIcon='search'></my-v-form>
       </v-flex>
-     <v-flex md9>
-     <my-v-form class="row jr" :inline='true' v-model='filters.model' v-if="filters.fields"  :fields='filters.fields' @submit='doSearch'  submitButtonText='Search'  submitButtonIcon='search'></my-v-form>
-     </v-flex>
+      <!-- dialog form start -->
       <v-flex md1>
-
-       <v-dialog v-model="dialog" persistent dialog-transition max-width="500px">
-     
-       <v-btn fab dark color="indigo" @click="add()" slot="activator" class="mb-2" v-if="!options.create">
-      <v-icon dark>add</v-icon>
-    </v-btn>
-      <v-card>
-        <v-form v-model="valid" ref="form" lazy-validation>
-        <v-card-title>
-          <span class="headline">{{ this.isShowEdit  ? 'EDIT' : 'ADD' }}</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container grid-list-md>
-            <v-layout wrap>
-              <v-flex xs12 sm12 md12 lg12 v-for="(fds, index) in form.fields" :key="fds[index]">
-
-                 <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="item[index]">
-                </v-select>
-                <template v-else-if="'radios' === fds.type">
-                
-                  <v-layout row wrap>
-            
-                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
-                        <v-radio
-                        v-model='value[index]'
-                        hide-details
-                        :value='option.value'
-                        :label='option.text'
-                        
-                        ></v-radio>
-
-                     </v-flex> -->
-                    
-                     <v-radio-group v-model="item[index]">
-                        <v-radio mandatory
-                          v-for="option in fds.choices"
-                          :key="option.text"
-                          :value='option.value'
-                          :label='option.text'
-                        ></v-radio>
-                      </v-radio-group>
-                  </v-layout>
-                </template>
-
-
-
-                <template v-else-if="'checkboxes' === fds.type" >
-                
-                  <v-layout  row wrap>
-            
-                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
-                        <v-radio
-                        v-model='value[index]'
-                        hide-details
-                        :value='option.value'
-                        :label='option.text'
-                        
-                        ></v-radio>
-
-                     </v-flex> -->
-                       
-                    
-                        <v-checkbox 
-                          v-for="option in fds.choices"
-                          :key="option.text"
-                          :value='option.value'
-                          :label='option.text'
-                          v-model='item[index]'
-                        ></v-checkbox>
-                     
-                  </v-layout>
-                </template>
-                <template v-else>
-                <v-text-field :label="fds.label" 
-                :error-messages="errorMessages[index]"
-                required="required"
-                :rules="form.rules[index] ? setRule(form.rules[index],index) : []"
-                v-model="item[index]" >
-                </v-text-field>
-                </template>
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn color="blue darken-1" flat @click.native="close">Close</v-btn>
-           <v-spacer></v-spacer>
-          <v-slide-x-reverse-transition>
-            <v-tooltip
-              left
-              v-if="formHasErrors"
-            >
-              <v-btn
-                icon
-                @click="resetForm"
-                slot="activator"
-                class="my-0"
-              >
-                <v-icon>refresh</v-icon>
-              </v-btn>
-              <span>Refresh form</span>
-            </v-tooltip>
-          </v-slide-x-reverse-transition>
-          <v-btn color="blue darken-1"   flat @click.native="save">Save</v-btn>
-         
-        </v-card-actions>
-        </v-form>
-      </v-card>
-    </v-dialog>
-    </v-flex>
+        <v-dialog v-model="dialog" persistent dialog-transition max-width="500px">
+          <v-btn v-show="actions.create" fab dark color="indigo" @click="add()" slot="activator" class="mb-2" >
+            <v-icon dark>add</v-icon></v-btn>
+          <v-card>
+            <my-form v-if="dialog" :dialog="true" :items="this.currentItem" @close="close"></my-form>
+          </v-card>
+        </v-dialog>
+      </v-flex>
     </v-layout>
-    <v-data-table
-      :headers="columns"
-      class="elevation-1"
-      :items='items'
-      :total-items="pagination.totalItems" 
-      
-      :pagination.sync="pagination"
-      :loading="loading"
-    >
-      <template slot="items" slot-scope="props">
-        <td :class="column.left? '': 'text-xs-left'" v-for="(column, index) in columns" :key="column.text" v-if="index < columns.length - 1 " v-html="getColumnData(props.item, column)"> </td>
-        <!-- <td>
-          <v-btn v-if="actions.edit" icon class="mx-0" @click.native.stop="showEdit(props.item)">
-            <v-icon color="teal">edit</v-icon>
-          </v-btn>
-          <v-btn v-if="actions.delete" icon class="mx-0" @click="deleteItem(props.index)">
-            <v-icon color="pink">delete</v-icon>
-          </v-btn>
-        </td> -->
-         <td v-if='actions !== false' width='200'>
-           <v-btn  v-if="actions.edit && form.open != 'page' && options.edit !== false" icon class="mx-0" @click.native.stop="showEdit(props.item)">
-            <v-icon color="teal">edit</v-icon>
-          </v-btn>
-         <template v-for=" (value, action) in actions">
-           <v-btn v-if="action != 'delete' && form.open == 'page' && options.delete !== false" icon  :key="action+1"  :to="{name: action, params: {resource,id:props.item.id}}">
-             <v-icon> {{action.icon ? action.icon : action}} </v-icon>
-           </v-btn>  
-           
-          <v-btn v-if="action == 'delete' && options.delete !== false" icon class="mx-0" :key="action" @click="deleteItem(props.index)">
-            <v-icon color="pink">delete</v-icon>
-          </v-btn>
-          
-          <v-btn v-if="action == 'edit'" icon class="mx-0" :key="action.icon" :to="{name: action, params: {resource,id:props.item.id}}">
-            <v-icon color="green">{{action}}</v-icon>
-          </v-btn>
+     <!-- data list start -->
+    <v-data-table 
+    :headers="columns"
+    v-model="selected"
+    class="elevation-1" 
+    select-all 
+    :items='items' 
+    :total-items="pagination.totalItems" 
+    :pagination.sync="pagination" 
+    :loading="loading">
 
-        </template>  
-          
-          <template v-for="btns in actionBtn">
-          <v-btn icon class="mx-0" :key="btns.name" @click="btns.action(props.item)">
-            <v-icon :color="btns.color">{{btns.icon}}</v-icon>
-            
-          </v-btn>
+    <template slot="headers" slot-scope="props">
+      <tr>
+        <th>
+          <v-checkbox
+            primary
+            hide-details
+            @click.native="toggleAll"
+            :input-value="props.all"
+            :indeterminate="props.indeterminate"
+          ></v-checkbox>
+        </th>
+        <th
+          v-for="header in props.headers"
+          :key="header.text"
+          :class="['column sortable', pagination.descending ? 'desc' : 'asc', header.value === pagination.sortBy ? 'active' : '']"
+          @click="changeSort(header.value)"
+        >
+          <v-icon small>arrow_upward</v-icon>
+          {{ header.text }}
+        </th>
+      </tr>
+    </template>
+      <template slot="items" slot-scope="props">
+        <tr :active="props.selected" @click="props.selected = !props.selected">
+        <td>
+          <v-checkbox
+            primary
+            hide-details
+            :input-value="props.selected"
+          ></v-checkbox>
+        </td>
+        <td :class="column.left? '': 'text-xs-left'" v-for="(column, index) in columns" :key="column.text" v-if="index < columns.length - 1 " v-html="getColumnData(props.item, column)"></td>
+        <!-- <td>
+        <v-btn v-if="actions.edit" icon class="mx-0" @click.native.stop="showEdit(props.item)">
+        <v-icon color="teal">edit</v-icon></v-btn>
+        <v-btn v-if="actions.delete" icon class="mx-0" @click="deleteItem(props.index)">
+        <v-icon color="pink">delete</v-icon></v-btn>
+        </td> -->
+        <td v-if='actions !== false' width='200'>
+          <v-btn v-if="actions.edit && form.open != 'page' && options.edit !== false" icon class="mx-0" @click.native.stop="showEdit(props.item)">
+            <v-icon color="teal">edit</v-icon></v-btn>
+          <template v-for=" (value, action) in actions">
+            <v-btn v-if="action != 'delete' && form.open == 'page' && options.delete !== false" icon :key="action+1" :to="{name: action, params: {resource,id:props.item.id}}">
+              <v-icon>{{action.icon ? action.icon : action}}</v-icon></v-btn>
+            <v-btn v-if="action == 'delete' && options.delete !== false" icon class="mx-0" :key="action" @click="deleteItem(props.index)">
+              <v-icon color="pink">delete</v-icon></v-btn>
           </template>
-          
-         </td>     
+          <template v-for="btns in actionBtn">
+            <v-btn icon class="mx-0" :key="btns.name" @click="btns.action(props.item)">
+              <v-icon :color="btns.color">{{btns.icon}}</v-icon></v-btn>
+          </template>
+        </td>
+        </tr>
       </template>
-      <template slot="no-data">
-       
-        Sorry, nothing to display here :(
-      
-      </template>
-    </v-data-table>
+      <template slot="no-data">Sorry, nothing to display here :(</template></v-data-table>
   </div>
 </template>
+
 <script>
 import actions from '@/actions'
 const getDefaultData = () => {
@@ -226,7 +135,7 @@ const getDefaultData = () => {
     items: [],
     dialog: false,
     item: {},
-    sel: {}
+    selected: []
   }
 }
 export default {
@@ -266,6 +175,10 @@ export default {
     initialize () {
       this.fetchGrid().then(() => {})
       this.fetchData()
+    },
+    toggleAll () {
+      if (this.selected.length) this.selected = []
+      else this.selected = this.items.slice()
     },
     fetchData () {
       this.preFetch()
@@ -353,7 +266,7 @@ export default {
           for (let k in data.columns) {
             data.columns[k].text = this.$t(data.columns[k].text)
           }
-          data.columns.push({text: '操作', value: '操作', sort: false})
+          data.columns.push({text: '操作', value: '操作', sortable: false})
           this.columns = data.columns || {}
           this.actions = data.actions || {}
           this.filters = data.filters || {}
@@ -400,7 +313,6 @@ export default {
       this.fetchData()
     },
     editItem (item) {
-      alert(1)
       this.currentItem = item
       this.fetchForm(item)
       this.dialog = true
@@ -470,31 +382,14 @@ export default {
       }
     },
     showEdit (item) {
-      this.item = {}
-      this.$refs.form.reset()
-      for (let n in this.form.fields) {
-        if(this.form.fields[n].type === 'checkboxes') {
-          this.item[n] = []
-        } else {
-          this.item[n] = item[n]
-        } 
-      }
+      this.currentItem = item
       this.dialog = true
       this.isShowEdit = true
-      
     },
     add () {
       this.edit = false
       this.isShowEdit = false
-      this.$refs.form.reset()
-     // this.fetchForm(this.item)
-      for (let n in this.form.fields) {
-        if(this.form.fields[n].type === 'checkboxes') {
-          this.item[n] = []
-        } else {
-          this.item[n] = ''
-        } 
-      }
+      this.currentItem = false
     },
     setRule (rules, index) {
       let rule = []

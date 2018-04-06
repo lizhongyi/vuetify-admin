@@ -1,28 +1,16 @@
 <template>
- <v-form v-model="valid" ref="form" lazy-validation>
+        <v-form v-model="valid" ref="form" lazy-validation>
+        <v-card-title>
+          <span class="headline">{{ resource }} / {{ formTitle }}</span>
+        </v-card-title>
         <v-card-text>
-          <v-container grid-list-md>
             <v-layout wrap>
-              <v-flex xs12 sm12 md12  v-for="(fds, index) in fields" :key="fds[index]">
-                 
-                <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="value[index]">
+              <v-flex xs12 sm12 md12 lg12 v-for="(fds, index) in form.fields" :key="fds[index]">
+                 <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="item[index]">
                 </v-select>
                 <template v-else-if="'radios' === fds.type">
-                
                   <v-layout row wrap>
-            
-                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
-                        <v-radio
-                        v-model='value[index]'
-                        hide-details
-                        :value='option.value'
-                        :label='option.text'
-                        
-                        ></v-radio>
-
-                     </v-flex> -->
-                    
-                     <v-radio-group v-model="value[index]">
+                     <v-radio-group v-model="item[index]">
                         <v-radio mandatory
                           v-for="option in fds.choices"
                           :key="option.text"
@@ -32,53 +20,33 @@
                       </v-radio-group>
                   </v-layout>
                 </template>
-
-
-
                 <template v-else-if="'checkboxes' === fds.type" >
-                
-                  <v-layout  :seta="setA(index)" row wrap>
-            
-                     <!-- <v-flex v-bind="{[fds.width]: true}" xs10 v-for="option in fds.choices" :key="option.text">
-                        <v-radio
-                        v-model='value[index]'
-                        hide-details
-                        :value='option.value'
-                        :label='option.text'
-                        
-                        ></v-radio>
-
-                     </v-flex> -->
-                       
-                    
-                        <v-checkbox 
-                          v-for="option in fds.choices"
-                          :key="option.text"
-                          :value='option.value'
-                          :label='option.text'
-                          v-model='value[index]'
-                        ></v-checkbox>
-                     
+                  <v-layout  row wrap>
+                    <v-checkbox 
+                      v-for="option in fds.choices"
+                      :key="option.text"
+                      :value='option.value'
+                      :label='option.text'
+                      v-model='item[index]'
+                    ></v-checkbox>
                   </v-layout>
                 </template>
-
-
-                <template v-else-if="['date', 'datetime', 'time'].indexOf(fds.type) > -1">
+                 <template v-else-if="['date', 'datetime', 'time'].indexOf(fds.type) > -1">
                   <v-menu>
-                    <v-text-field slot='activator' v-model="value[index]" :label="$t(fds.label)"></v-text-field>
-                    <v-date-picker v-model="value[index]"  no-title scrollable actions></v-date-picker>
+                    <v-text-field slot='activator' v-model="item[index]" :label="$t(fds.label)"></v-text-field>
+                    <v-date-picker v-model="item[index]"  no-title scrollable actions></v-date-picker>
                   </v-menu>
-                </template>    
-                <v-text-field v-else :label="fds.label" 
+                </template> 
+                <template v-else>
+                <v-text-field :label="fds.label" 
                 :error-messages="errorMessages[index]"
                 required="required"
-                validate-on-blur
-                :rules="rules[index] ? setRule(rules[index],index) : []"
-                v-model="value[index]" >
+                :rules="form.rules[index] ? setRule(form.rules[index],index) : []"
+                v-model="item[index]" >
                 </v-text-field>
+                </template>
               </v-flex>
             </v-layout>
-          </v-container>
         </v-card-text>
         <v-card-actions>
           <v-btn color="blue darken-1" flat @click.native="close">Close</v-btn>
@@ -99,250 +67,178 @@
               <span>Refresh form</span>
             </v-tooltip>
           </v-slide-x-reverse-transition>
-          <v-btn color="blue darken-1"   flat @click.native="onSubmit">Save</v-btn>
-         
+          <v-btn color="blue darken-1"   flat @click.native="save">Save</v-btn>
         </v-card-actions>
         </v-form>
+  </div>
 </template>
-
 <script>
-export default {
-  props: {
-    inline: {
-      type: Boolean,
-      default: false
-    },
-    groupBy: {
-      required: false,
-      type: String,
-      default: null
-    },
-    action: {
-      required: false,
-      type: String,
-      default: null
-    },
-    submitButtonText: {
-      required: false,
-      type: String,
-      default: 'Submit'
-    },
-    submitButtonIcon: {
-      required: false,
-      type: String,
-      default: 'send'
-    },
-    method: {
-      required: false,
-      type: String,
-      default: 'post'
-    },
-    value: {
-      required: false,
-      type: Object,
-      default: () => { }
-    },
-    fields: {
-      required: true,
-      type: Object
-    },
-
+const getDefaultData = () => {
+  return {
     rules: {
-      required: false,
-      type: Object,
-      default: () => { }
     },
-    messages: {
-      required: false,
-      type: Object,
-      default: () => { }
-    }
-
-  },
-  data () {
-    return {
-      model: this.value,
-      hasError: false,
-      errors: [],
-      message: '',
-      formHasErrors: null,
-      valid: false,
-      errorMessages: [],
-      nimabi: {
-        required: v => !!v,
-        email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v),
-        min: v => v && v.length >= 6,
-        max: v => v && v.length <= 10,
-        phone: v => /^[1][3,4,5,7,8][0-9]{9}$/.test(v)
-      },
-      rulesFun: {},
-      item: {
-       
-      }
-    }
-  },
-
+    nimabi: {
+      required: v => !!v,
+      email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v),
+      min: v => v && v.length >= 6,
+      max: v => v && v.length <= 10,
+      phone: v => /^[1][3,4,5,7,8][0-9]{9}$/.test(v)
+    },
+    formHasErrors: false,
+    valid: true,
+    errorMessages: [],
+    form: {
+      model: {},
+      fields: {},
+      rules: {},
+      messages: {},
+      open: null
+    },
+    action: null
+  }
+}
+export default {
+  props: ['dialog', 'items'],
+  name: 'publicForm',
+  data: getDefaultData,
   computed: {
-    group () {
-      if (!this.groupBy) {
-        return null
-      }
-      let parents = {}
-      let children = {}
-      for (let k in this.fields) {
-        let field = this.fields[k]
-        let ref = field[this.groupBy]
-        let parentKey = field.id
-        if (ref === null) { // is parent
-          parents[parentKey] = field
-        } else { // is child
-          if (!children[ref]) {
-            children[ref] = {}
-          }
-          children[ref][k] = field
-        }
-      }
-      return {parents, children}
+    formTitle () {
+      return this.$route.name === 'edit' ? 'Edit Item' : 'New Item'
     },
-
-    autoSubmit () {
-      return !!this.action
+    resource () {
+      return this.$route.params.resource
     }
   },
-  watch: {
-    'value' (val) {
-      this.model = val
-      this.opt()
-    },
-    'model': 'updateFields'
+  created () {
+    this.initialize()
   },
   methods: {
-
-    getGroupedFields () { },
-    getFieldError (fieldName) {
-      for (let k in this.errors) {
-        let error = this.errors[k]
-        if (error.field === fieldName) {
-          return error.message
-        }
+    initialize () {
+      if (this.isEdit()) {
+        this.fetchForm(this.$route.params.id || this.items.id)
+      } else {
+        this.fetchForm()
       }
     },
-    updateFields () {
-
+    fetchForm (item) {
+      console.log(item)
+      const self = this
+      this.$http.get(`${this.resource}/form`, {
+        // 此处优有BUG 数据库必须要有一条数据来取表结构 待优化
+        params: {id: item || 58}
+      }).then((data) => {
+        this.form = data
+        this.item = this.form.model
+        for (let index in this.form.fields) {
+          if (this.isEdit()) {
+            if (this.form.fields[index].type === 'checkboxes') {
+              this.item[index] = this.item[index] ? this.form.model[index].split(',') : []
+              console.log(this.item[index])
+            }
+          } else {
+            this.item[index] = null
+            if (this.form.fields[index].type === 'checkboxes') {
+              this.item[index] = []
+            }
+          }
+        }
+        for (let itemx in this.form.rules) {
+          let funs = this.form.rules[itemx].split('|')
+          let minMax
+          let min
+          let max
+          for (let i in funs) {
+            minMax = funs[i].split(':')
+            if (minMax[0] === 'min') {
+              funs[i] = 'min'
+              min = minMax[1]
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                return (val && val.length) >= min || self.form.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
+              }
+            } else if (minMax[0] === 'max') {
+              funs[i] = 'max'
+              max = minMax[1]
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                return (val && val.length) <= max || self.form.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
+              }
+            } else {
+              this.rules[itemx + '.' + funs[i]] = function (val) {
+                console.log(minMax)
+                return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
+              }
+            }
+          }
+        }
+      })
     },
-
-    onSubmit () {
+    save () {
+      let method, params
+      if (!this.isEdit()) {
+        method = 'post'
+        params = ''
+      } else {
+        method = 'patch'
+        params = `/${this.item.id}`
+      }
       if (this.$refs.form.validate()) {
 
       }
-      const valid = global.validator.make(this.value, this.rules, this.messages)
+      for (let index in this.item) {
+        if (Object.prototype.toString.call(this.item[index]) === '[object Array]') {
+          this.item[index] = this.item[index].toString()
+        }
+      }
+      const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
       valid.extend('phone', function (v) {
         return !!v
       }, ':nshashasas')
-      if (valid.passes()) {
-        this.$emit('input', this.model)
-        if (!this.autoSubmit) {
-          this.$emit('submit')
-          return false
-        }
-        this.$http[this.method](this.action, this.value).then((data) => {
-          if (data.code === 0) {
-            this.$emit('success', data)
-          } else {
-            this.$http.open({
-              body: data.messages || data.message,
-              color: 'error',
-              timeout: 8000
-            })
-          }
-          this.hasError = false
-        }).catch(({ response }) => {
-          let { status, data } = response
-          this.hasError = true
-          if (data.message) {
-            this.errors = [data]
-          }
-          switch (status) {
-            case 422:
-
-              this.errors = data
-              break
-            default:
-          }
-          this.$emit('error', status, data)
-        })
-      } else {
-        const errors = valid.getErrors()
-        console.log(errors)
-        this.hasError = true
-        this.errors = errors
-        this.$emit('error', errors)
-        // this.$bus.showMessage('error', 'error')
+      if (!valid.passes()) {
+        // const errors = valid.getErrors()
+        // this.errorMessages = errors
+        return
+      }
+      const success = (data) => {
+        this.$router.push(`/crud/${this.resource}`)
+      }
+      this.$http.ajax(this.$http[method](`${this.resource}${params}`, this.item), success)
+    },
+    onSaveEdit (data) {
+      if (data.id) {
+        this.isShowEdit = false
+        this.fetchData()
       }
     },
-    resetForm () {
-
+    close () {
+      if (this.dialog) {
+        this.$emit('close')
+      } else {
+        this.$router.push(`/crud/${this.resource}`)
+      }
     },
     setRule (rules, index) {
       let rule = []
       rules.split('|').map((item) => {
         if (item.split(':')[1]) {
           let newItem = item.split(':')[0]
-          rule.push(this.rulesFun[index + '.' + newItem])
+          rule.push(this.rules[index + '.' + newItem])
         } else {
-          rule.push(this.rulesFun[index + '.' + item])
+          rule.push(this.rules[index + '.' + item])
         }
       })
       console.log(rule)
       return rule
     },
-    opt () {
-      const self = this
-      for (let itemx in this.rules) {
-        let funs = this.rules[itemx].split('|')
-        let minMax
-        let min
-        let max
-        for (let i in funs) {
-          minMax = funs[i].split(':')
-          if (minMax[0] === 'min') {
-            funs[i] = 'min'
-            min = minMax[1]
-            this.rulesFun[itemx + '.' + funs[i]] = function (val) {
-              return (val && val.length) >= min || self.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
-            }
-          } else if (minMax[0] === 'max') {
-            funs[i] = 'max'
-            max = minMax[1]
-            this.rulesFun[itemx + '.' + funs[i]] = function (val) {
-              return (val && val.length) <= max || self.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
-            }
-          } else {
-            this.rulesFun[itemx + '.' + funs[i]] = function (val) {
-              console.log(minMax)
-              return self.nimabi[funs[i]](val) || self.messages[itemx + '.' + funs[i]]
-            }
-          }
-        }
-      }
+    resetForm () {
+
     },
-    setA (index) {
-       this.item[index] = []
-       console.log(10)
+    isEdit () {
+      if (this.$route.name === 'edit' || this.items) {
+        console.log(this.items)
+        return true
+      } else {
+        return false
+      }
     }
-  },
-  mounted () {
-    
-    //this.item = this.value
-    // this.$bus.showMessage('success', 'success')
-  },
-  created () {
-    // global.validator.extend('unique', function (data, field, message, args, get) {
-    //   return new Promise(function (resolve, reject) {
-    //     // const fieldValue = get(data, field)
-    //     return resolve('Unsupported in client.')
-    //   })
-    // }, this.$t('Field should be unique.'))
   }
 }
 </script>
