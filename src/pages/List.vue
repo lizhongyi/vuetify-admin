@@ -8,10 +8,14 @@
       <!-- dialog form start -->
       <v-flex md1>
         <v-dialog v-model="dialog" persistent dialog-transition max-width="500px">
-          <v-btn v-show="actions.create" fab dark color="indigo" @click="add()" slot="activator" class="mb-2" >
+          <v-btn v-show="options.create && options.open  === 'window'" fab dark color="indigo" @click="add()" slot="activator" class="mb-2" >
+            <v-icon dark>add</v-icon></v-btn>
+
+            <v-btn v-show="options.create && options.open  === 'page'" fab dark color="indigo" :to="{path:$route.path+'/create'}" slot="activator" class="mb-2" >
             <v-icon dark>add</v-icon></v-btn>
           <v-card>
-            <my-form v-if="dialog" :dialog="true" :items="this.currentItem" @close="close"></my-form>
+          
+            <my-form v-if="dialog" :dialog="true" :action="action" :items="this.currentItem" @close="close"></my-form>
           </v-card>
         </v-dialog>
       </v-flex>
@@ -27,7 +31,7 @@
     :pagination.sync="pagination" 
     :loading="loading">
 
-    <template slot="headers" slot-scope="props">
+    <!-- <template slot="headers" slot-scope="props">
       <tr>
         <th>
           <v-checkbox
@@ -48,7 +52,7 @@
           {{ header.text }}
         </th>
       </tr>
-    </template>
+    </template> -->
       <template slot="items" slot-scope="props">
         <tr :active="props.selected" @click="props.selected = !props.selected">
         <td>
@@ -59,23 +63,18 @@
           ></v-checkbox>
         </td>
         <td :class="column.left? '': 'text-xs-left'" v-for="(column, index) in columns" :key="column.text" v-if="index < columns.length - 1 " v-html="getColumnData(props.item, column)"></td>
-        <!-- <td>
-        <v-btn v-if="actions.edit" icon class="mx-0" @click.native.stop="showEdit(props.item)">
-        <v-icon color="teal">edit</v-icon></v-btn>
-        <v-btn v-if="actions.delete" icon class="mx-0" @click="deleteItem(props.index)">
-        <v-icon color="pink">delete</v-icon></v-btn>
-        </td> -->
+       <!-- actions start -->
         <td v-if='actions !== false' width='200'>
-          <v-btn v-if="actions.edit && form.open != 'page' && options.edit !== false" icon class="mx-0" @click.native.stop="showEdit(props.item)">
+          <v-btn v-if="actions.edit && options.open !== 'page' && options.edit !== false" icon class="mx-0" @click.native.stop="showEdit(props.item)">
             <v-icon color="teal">edit</v-icon></v-btn>
           <template v-for=" (value, action) in actions">
-            <v-btn v-if="action != 'delete' && form.open == 'page' && options.delete !== false" icon :key="action+1" :to="{name: action, params: {resource,id:props.item.id}}">
+            <v-btn v-if="action != 'delete' && options.open === 'page' && options.delete !== false" icon :key="action+1" :to="{name: action, params: {resource,id:props.item.id}}">
               <v-icon>{{action.icon ? action.icon : action}}</v-icon></v-btn>
             <v-btn v-if="action == 'delete' && options.delete !== false" icon class="mx-0" :key="action" @click="deleteItem(props.index)">
               <v-icon color="pink">delete</v-icon></v-btn>
           </template>
           <template v-for="btns in actionBtn">
-            <v-btn icon class="mx-0" :key="btns.name" @click="btns.action(props.item)">
+            <v-btn icon class="mx-0" :key="btns.name" @click.native.stop="btns.action(props.item)">
               <v-icon :color="btns.color">{{btns.icon}}</v-icon></v-btn>
           </template>
         </td>
@@ -89,15 +88,6 @@
 import actions from '@/actions'
 const getDefaultData = () => {
   return {
-    rules: {
-    },
-    nimabi: {
-      required: v => !!v,
-      email: v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v),
-      min: v => v && v.length >= 6,
-      max: v => v && v.length <= 10,
-      phone: v => /^[1][3,4,5,7,8][0-9]{9}$/.test(v)
-    },
     formHasErrors: false,
     valid: true,
     errorMessages: [],
@@ -135,16 +125,14 @@ const getDefaultData = () => {
     items: [],
     dialog: false,
     item: {},
-    selected: []
+    selected: [],
+    action: 'add',
+    search: null
   }
 }
 export default {
   data: getDefaultData,
   computed: {
-    formTitle () {
-      console.log(this.item.edit)
-      return this.item.edit ? 'Edit Item' : 'New Item'
-    },
     resource () {
       return this.$route.params.resource
     },
@@ -153,6 +141,7 @@ export default {
     }
   },
   created () {
+    console.log(this.$route)
     this.initialize()
   },
   watch: {
@@ -162,14 +151,17 @@ export default {
     'pagination.page' (val) {
       this.fetchData()
     },
+    'pagination.rowsPerPage' (val) {
+      this.fetchData()
+    },
     'pagination.sortBy' (val) {
       this.fetchData()
     },
     'pagination.descending' (val) {
       this.fetchData()
     },
-    '$route.params': 'refresh'
-    // '$route.query': 'updateRoute'
+    '$route.params': 'refresh',
+    '$route.query': 'updateRoute'
   },
   methods: {
     initialize () {
@@ -185,45 +177,10 @@ export default {
       this.loading = true
       this.$http.get(`${this.resource}`, {params: this.$route.query}).then((data) => {
         this.items = data.data
-        this.fetchForm(this.items[0])
+        // this.currentItem = this.items[0]
         this.pagination.totalItems = data.total
         this.loading = false
         this.actionBtn = actions[this.resource]
-      })
-    },
-    fetchForm (item) {
-      const self = this
-      this.$http.get(`${this.resource}/form`, {
-        params: {id: item.id}
-      }).then((data) => {
-        this.form = data
-        for (let itemx in this.form.rules) {
-          let funs = this.form.rules[itemx].split('|')
-          let minMax
-          let min
-          let max
-          for (let i in funs) {
-            minMax = funs[i].split(':')
-            if (minMax[0] === 'min') {
-              funs[i] = 'min'
-              min = minMax[1]
-              this.rules[itemx + '.' + funs[i]] = function (val) {
-                return (val && val.length) >= min || self.form.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
-              }
-            } else if (minMax[0] === 'max') {
-              funs[i] = 'max'
-              max = minMax[1]
-              this.rules[itemx + '.' + funs[i]] = function (val) {
-                return (val && val.length) <= max || self.form.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
-              }
-            } else {
-              this.rules[itemx + '.' + funs[i]] = function (val) {
-                console.log(minMax)
-                return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
-              }
-            }
-          }
-        }
       })
     },
     fetch () {
@@ -277,7 +234,6 @@ export default {
             let sortData = this.options.sort.split('-')
             let desc = sortData.length > 1
             let sortField = sortData.pop()
-
             // if (sortField.indexOf('.') < 0) {
             //   sortField = sortField
             // }
@@ -299,9 +255,10 @@ export default {
       this.$route.query.page = this.pagination.page
     },
     updateRoute () {
+      console.log(33)
       this.$route.query.keepLayout = true
       console.log('update route')
-      this.$router.go({
+      this.$router.push({
         path: this.$route.path,
         params: this.$route.params,
         query: this.$route.query
@@ -343,38 +300,6 @@ export default {
       this.item.edit = false
       this.dialog = false
     },
-    save () {
-      let method, params
-      if (!this.isShowEdit) {
-        method = 'post'
-        params = ''
-      } else {
-        method = 'patch'
-        params = `/${this.item.id}`
-      }
-      if (this.$refs.form.validate()) {
-
-      }
-      const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
-      valid.extend('phone', function (v) {
-        return !!v
-      }, ':nshashasas')
-      if (!valid.passes()) {
-        // const errors = valid.getErrors()
-        // this.errorMessages = errors
-        return
-      }
-      const success = (data) => {
-        this.$http.open({
-          body: data.messages,
-          color: 'success',
-          timeout: 1000
-        })
-        this.dialog = false
-       // this.fetchData()
-      }
-      this.$http.ajax(this.$http[method](`${this.resource}${params}`, this.item), success)
-    },
     onSaveEdit (data) {
       if (data.id) {
         this.isShowEdit = false
@@ -384,29 +309,21 @@ export default {
     showEdit (item) {
       this.currentItem = item
       this.dialog = true
+      this.action = 'edit'
       this.isShowEdit = true
     },
     add () {
+      this.action = 'add'
       this.edit = false
       this.isShowEdit = false
-      this.currentItem = false
-    },
-    setRule (rules, index) {
-      let rule = []
-      rules.split('|').map((item) => {
-        if (item.split(':')[1]) {
-          let newItem = item.split(':')[0]
-          rule.push(this.rules[index + '.' + newItem])
-        } else {
-          rule.push(this.rules[index + '.' + item])
-        }
-      })
-      console.log(rule)
-      return rule
-    },
-    resetForm () {
-
+      // this.currentItem = false
     }
+  },
+  beforeRouteUpdate (to, from, next) {
+  // just use `this`
+    this.name = to.params.name
+    console.log(this.name)
+    next()
   }
 }
 </script>

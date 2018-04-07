@@ -15,7 +15,7 @@ Vue.use(Router)
 
 const router = new Router({
   base: __dirname,
-  mode: 'hash',
+  mode: 'history',
   scrollBehavior: () => ({ y: 0 }),
   routes: [
     route('/login', 'Login', 'login'),
@@ -26,6 +26,7 @@ const router = new Router({
     route('/', 'Main', null, [
       route('/', 'Home', 'home'),
       route('/crud/:resource', 'List', 'list'),
+      route('/crud/:resource/search', 'List', 'listSearch'),
       route('/crud/:resource/:id/edit', 'CrudForm', 'edit'),
       route('/crud/:resource/create', 'CrudForm', 'create'),
       route('/crud/:resource/:id/:action', 'CrudForm', 'action'),

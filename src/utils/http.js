@@ -67,7 +67,7 @@ http.open = function (options = {}) {
 http.ajax = (Promise, success) => {
   Promise.then((data) => {
     console.log(data)
-    if (data.code === 0 || data !== true) {
+    if (data.code === 0 || data.user) {
       success(data)
     } else {
       http.open({
@@ -75,7 +75,7 @@ http.ajax = (Promise, success) => {
         color: 'error',
         timeout: 7000
       })
-      return data
+      return false
     }
   })
 }

@@ -55,7 +55,6 @@
           <v-slide-x-reverse-transition>
             <v-tooltip
               left
-              v-if="formHasErrors"
             >
               <v-btn
                 icon
@@ -95,81 +94,40 @@ const getDefaultData = () => {
       messages: {},
       open: null
     },
-    action: null
+    addFields: {},
+    item: {}
   }
 }
 export default {
-  props: ['dialog', 'items'],
+  props: ['dialog', 'items', 'action'],
   name: 'publicForm',
   data: getDefaultData,
   computed: {
     formTitle () {
-      return (this.isEdit()) ? 'Edit Item' : 'New Item'
+      if (this.isEdit()) {
+        return 'Edit Item'
+      } else {
+        return 'New Item'
+      }
     },
     resource () {
       return this.$route.params.resource
     }
   },
   created () {
-    this.initialize()
+    if (this.action === 'edit' || this.$route.params.id) {
+      this.fetchForm(this.$route.params.id ? this.$route.params.id : this.items.id)
+    } else {
+      this.fetchForm()
+    }
   },
   methods: {
-    initialize () {
-      if (this.isEdit()) {
-        this.fetchForm(this.$route.params.id || this.items.id)
-      } else {
-        this.fetchForm()
-      }
-    },
     fetchForm (item) {
-      console.log(item)
-      const self = this
+      // 如果是新增就不要请求远程了
       this.$http.get(`${this.resource}/form`, {
-        // 此处优有BUG 数据库必须要有一条数据来取表结构 待优化
-        params: {id: item || 58}
+        params: { id: item }
       }).then((data) => {
-        this.form = data
-        this.item = this.form.model
-        for (let index in this.form.fields) {
-          if (this.isEdit()) {
-            if (this.form.fields[index].type === 'checkboxes') {
-              this.item[index] = this.item[index] ? this.form.model[index].split(',') : []
-              console.log(this.item[index])
-            }
-          } else {
-            this.item[index] = null
-            if (this.form.fields[index].type === 'checkboxes') {
-              this.item[index] = []
-            }
-          }
-        }
-        for (let itemx in this.form.rules) {
-          let funs = this.form.rules[itemx].split('|')
-          let minMax
-          let min
-          let max
-          for (let i in funs) {
-            minMax = funs[i].split(':')
-            if (minMax[0] === 'min') {
-              funs[i] = 'min'
-              min = minMax[1]
-              this.rules[itemx + '.' + funs[i]] = function (val) {
-                return (val && val.length) >= min || self.form.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
-              }
-            } else if (minMax[0] === 'max') {
-              funs[i] = 'max'
-              max = minMax[1]
-              this.rules[itemx + '.' + funs[i]] = function (val) {
-                return (val && val.length) <= max || self.form.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
-              }
-            } else {
-              this.rules[itemx + '.' + funs[i]] = function (val) {
-                console.log(minMax)
-                return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
-              }
-            }
-          }
-        }
+        this.setForm(data)
       })
     },
     save () {
@@ -230,14 +188,65 @@ export default {
       return rule
     },
     resetForm () {
-
+      // for (let index in this.form.fields) {
+      //   this.item[index] = null
+      //   if (this.form.fields[index].type === 'checkboxes') {
+      //     this.item[index] = []
+      //   }
+      // }
+      this.$refs.form.reset()
     },
     isEdit () {
-      if (this.$route.name === 'edit' || this.items) {
-        console.log(this.items)
+      if (this.$route.name === 'edit' || this.action === 'edit') {
         return true
       } else {
         return false
+      }
+    },
+    setForm (data) {
+      var self = this
+      this.form = data
+      this.item = this.form.model
+      for (let index in this.form.fields) {
+        if (this.isEdit()) {
+          if (this.form.fields[index].type === 'checkboxes') {
+            this.item[index] = this.item[index] ? this.form.model[index].split(',') : []
+            console.log(this.item[index])
+          }
+        } else {
+          if (this.form.fields[index].type === 'checkboxes') {
+            this.item[index] = []
+          } else {
+            this.item[index] = null
+          }
+        }
+      }
+      for (let itemx in this.form.rules) {
+        let funs = this.form.rules[itemx].split('|')
+        let minMax
+        let min
+        let max
+        for (let i in funs) {
+          minMax = funs[i].split(':')
+          if (minMax[0] === 'min') {
+            funs[i] = 'min'
+            min = minMax[1]
+            this.rules[itemx + '.' + funs[i]] = function (val) {
+              return (val && val.length) >= min || self.form.messages[itemx + '.' + funs[i]] + '不能少于' + min + '个字符'
+            }
+          } else if (minMax[0] === 'max') {
+            funs[i] = 'max'
+            max = minMax[1]
+            this.rules[itemx + '.' + funs[i]] = function (val) {
+              return (val && val.length) <= max || self.form.messages[itemx + '.' + funs[i]] + '不能超过' + max + '个字符'
+            }
+          } else {
+            this.rules[itemx + '.' + funs[i]] = function (val) {
+              console.log(minMax)
+              return self.nimabi[funs[i]](val) || self.form.messages[itemx + '.' + funs[i]]
+            }
+          }
+        }
       }
     }
   }
