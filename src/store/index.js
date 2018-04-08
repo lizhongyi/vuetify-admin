@@ -24,7 +24,7 @@ const store = new Vuex.Store({
       show: false
     },
     config: config,
-    formData: {}
+    formData: null
 
   },
   mutations: {

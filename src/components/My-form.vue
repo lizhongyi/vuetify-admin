@@ -1,7 +1,7 @@
 <template>
         <v-form v-model="valid" ref="form" lazy-validation>
         <v-card-title>
-          <span class="headline">{{ resource }} / {{ formTitle }}</span>
+          <span class="headline">{{ resource }} / {{ formTitle }} {{$store.formData}}</span>
         </v-card-title>
         <v-card-text>
             <v-layout wrap>
@@ -123,11 +123,19 @@ export default {
   },
   methods: {
     fetchForm (item) {
+      if (this.$store.state.formData && this.$store.state.formData[this.resource] && !this.isEdit()) {
+        this.setForm(this.$store.state.formData[this.resource])
+        return false
+      }
       // 如果是新增就不要请求远程了
       this.$http.get(`${this.resource}/form`, {
         params: { id: item }
       }).then((data) => {
         this.setForm(data)
+        // 加入本地缓存
+        let formData = {}
+        formData[this.resource] = data
+        this.$store.commit('setForm', formData)
       })
     },
     save () {
@@ -142,11 +150,6 @@ export default {
       if (this.$refs.form.validate()) {
 
       }
-      for (let index in this.item) {
-        if (Object.prototype.toString.call(this.item[index]) === '[object Array]') {
-          this.item[index] = this.item[index].toString()
-        }
-      }
       const valid = global.validator.make(this.item, this.form.rules, this.form.messages)
       valid.extend('phone', function (v) {
         return !!v
@@ -156,6 +159,11 @@ export default {
         // this.errorMessages = errors
         return
       }
+      // for (let index in this.item) {
+      //   if (Object.prototype.toString.call(this.item[index]) === '[object Array]') {
+      //     this.item[index] = this.item[index].toString()
+      //   }
+      // }
       const success = (data) => {
         this.$router.push(`/crud/${this.resource}`)
       }
@@ -188,13 +196,12 @@ export default {
       return rule
     },
     resetForm () {
-      // for (let index in this.form.fields) {
-      //   this.item[index] = null
-      //   if (this.form.fields[index].type === 'checkboxes') {
-      //     this.item[index] = []
-      //   }
-      // }
       this.$refs.form.reset()
+      for (let index in this.form.fields) {
+        if (this.form.fields[index].type === 'checkboxes') {
+          this.item[index] = []
+        }
+      }
     },
     isEdit () {
       if (this.$route.name === 'edit' || this.action === 'edit') {
