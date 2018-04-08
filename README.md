@@ -1,6 +1,7 @@
 # an admin-client
 
-> an my-oa
+> demo http://118.31.8.17/
+> admin 123456
 
 ## Build Setup
 
