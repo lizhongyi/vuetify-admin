@@ -6,7 +6,7 @@
         <v-card-text>
             <v-layout wrap>
               <v-flex xs12 sm12 md12 lg12 v-for="(fds, index) in form.fields" :key="fds[index]">
-                 <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.choices" v-model="item[index]">
+                 <v-select v-if="['select', 'select2'].includes(fds.type)"  :items="fds.options" v-model="item[index]">
                 </v-select>
                 <template v-else-if="'radios' === fds.type">
                   <v-layout row wrap>

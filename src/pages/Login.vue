@@ -59,7 +59,7 @@ export default {
     return {
       model: {
         username: 'admin',
-        password: 'admin'
+        password: '123456'
       },
       errors: {},
       fields: {

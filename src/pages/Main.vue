@@ -1,17 +1,20 @@
 <template lang="pug">
   v-app(:dark='dark')
-    v-navigation-drawer(persistent='', :mini-variant='miniVariant', :clipped='clipped', v-model='drawer', enable-resize-watcher='', fixed='', app='')
+    v-navigation-drawer(persistent='', :width="240" :mini-variant='miniVariant', :clipped='clipped', v-model='drawer', enable-resize-watcher='', fixed='', app='')
       v-list
+        div(class="text-xs-center" v-show="!miniVariant")
+          h1(class="logo-text") Vuetify
         template(v-for='item in menu')
           v-list-group(:prepend-icon='item.icon', no-action='', :key='item.title', v-if='item.items')
             v-list-tile(slot='activator')
               v-list-tile-content
                 v-list-tile-title {{ item.title }}
             v-list-tile(v-for='subItem in item.items', :key='subItem.href',:to='subItem.href', v-bind:router='!subItem.target', ripple, v-bind:disabled='subItem.disabled', v-bind:target='subItem.target')
-              v-list-tile-content(:prepend-icon='subItem.icon')
-                v-list-tile-title {{ subItem.title }}
               v-list-tile-action
                 v-icon {{ subItem.icon }}
+              v-list-tile-content
+                v-list-tile-title {{ subItem.title }}
+              
           v-list-tile(v-if='!item.items', :key='item.title',:to='item.href', router, ripple, v-bind:disabled='item.disabled', :title="item.title")
             v-list-tile-action
               v-icon(v-text='item.icon')
@@ -51,7 +54,7 @@
     v-content(style='margin:1rem')
       router-view
     v-footer(:inset='fixed', app='')
-      span © {{ new Date().getFullYear() }}
+      div(style="text-align:center", class="text-xs-center") © {{ new Date().getFullYear() }}
 </template>
 
 
@@ -60,9 +63,9 @@ import { mapState, mapActions } from 'vuex'
 export default {
   data () {
     return {
-      clipped: true,
+      clipped: false,
       drawer: true,
-      fixed: false,
+      fixed: true,
       dark: false,
       miniVariant: false,
       right: true,
@@ -87,7 +90,7 @@ export default {
     },
     fetchMenu () {
       // fetch menu from server
-      // this.$http.get('menu').then((data) => { this.$store.commit('setMenu', data.data)})
+      this.$http.get('menu').then((data) => { this.$store.commit('setMenu', data.data) })
     }
   },
   created () {
@@ -98,9 +101,16 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .list--group__header--active{
   color: red
+}
+.list__group__items--no-action .list__tile {
+    padding-left:16px
+}
+.logo-text {
+  font-size: 40px;
+  color:lightslategray
 }
 </style>
 

@@ -7,7 +7,7 @@ const config = {
     mock: false, // enable mock
     http: true // http request log
   },
-  api: `${baseUrl}/api`
+  api: `/api`
   // locale: 'en', //en
   // api: 'http://192.168.1.108:3333/admin/api'
 }
